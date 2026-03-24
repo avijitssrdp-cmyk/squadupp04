@@ -7,18 +7,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --volt: #ccff00; --carbon: #0a0a0a; --glass: rgba(20, 20, 20, 0.9); }
+        :root { --volt: #ccff00; --carbon: #0a0a0a; --glass: rgba(15, 15, 15, 0.85); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--carbon); color: white; overflow-x: hidden; }
-        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-        .btn-volt { background: var(--volt); color: black; font-weight: 900; text-transform: uppercase; border-radius: 0.75rem; transition: 0.3s; }
-        .input-dark { background: #141414; border: 1px solid #333; color: white; border-radius: 0.75rem; padding: 1rem; width: 100%; outline: none; }
         
-        .bg-layer { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; z-index: 0; transition: opacity 2s ease-in-out; }
-        .bg-active { opacity: 0.5; }
-        .sidebar-hidden { transform: translateX(-101%); }
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .btn-volt { background: var(--volt); color: black; font-weight: 900; text-transform: uppercase; border-radius: 0.75rem; transition: 0.3s; cursor: pointer; }
+        .btn-volt:active { transform: scale(0.97); }
+        .input-dark { background: #141414; border: 1px solid #333; color: white; border-radius: 0.75rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; }
+        .input-dark:focus { border-color: var(--volt); }
+
+        /* 🚀 HIGH-VISIBILITY BACKGROUND ENGINE */
+        .bg-container { position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: 2.5rem; }
+        .bg-layer { 
+            position: absolute; inset: 0; background-size: cover; background-position: center; 
+            opacity: 0; transition: opacity 2.5s ease-in-out; transform: scale(1.1); 
+        }
+        .bg-active { opacity: 0.6; transform: scale(1); transition: opacity 2.5s ease-in-out, transform 12s linear; }
+        
+        /* Dark tint integrated into the layer for better text readability */
+        .bg-layer::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, #0a0a0a 15%, transparent 85%); }
+
+        .sidebar-hidden { transform: translateX(-105%); }
         .sidebar-visible { transform: translateX(0); }
         
-        @keyframes subtleGlow { 0% { text-shadow: 0 0 5px rgba(204,255,0,0.2); } 100% { text-shadow: 0 0 15px rgba(204,255,0,0.5); } }
+        @keyframes subtleGlow { 0% { text-shadow: 0 0 5px rgba(204,255,0,0.1); } 100% { text-shadow: 0 0 15px rgba(204,255,0,0.4); } }
         .squadup-anim { animation: subtleGlow 2s infinite alternate; }
     </style>
 </head>
@@ -33,16 +45,16 @@
             <input type="text" id="login-id" placeholder="Phone or Email" class="input-dark">
             <input type="password" id="login-pass" placeholder="Password" class="input-dark">
             <p onclick="showForgot(true)" class="text-[10px] text-gray-500 font-bold uppercase cursor-pointer hover:text-white text-right px-1">Forgot Password?</p>
-            <button onclick="handleLogin()" class="w-full py-4 btn-volt text-lg">Login</button>
-            <p class="text-center text-sm text-gray-500 uppercase font-bold">New? <span onclick="toggleAuth('register')" class="text-[#ccff00] cursor-pointer">Register</span></p>
+            <button onclick="handleLogin()" id="login-btn" class="w-full py-4 btn-volt text-lg">Initialize Session</button>
+            <p class="text-center text-sm text-gray-500 uppercase font-bold mt-4">New athlete? <span onclick="toggleAuth('register')" class="text-[#ccff00] cursor-pointer hover:underline">Register</span></p>
         </div>
 
         <div id="forgot-box" class="hidden w-full max-w-sm space-y-4">
-            <p class="text-xs text-[#ccff00] font-black uppercase text-center mb-2">Password Recovery</p>
+            <p class="text-xs text-[#ccff00] font-black uppercase text-center mb-2">Password Recovery Protocol</p>
             <input type="email" id="forgot-email" placeholder="Registered Email" class="input-dark">
             <input type="password" id="forgot-new-pass" placeholder="New Password" class="input-dark">
-            <button onclick="handleForgot()" class="w-full py-4 btn-volt">Reset Password</button>
-            <p onclick="showForgot(false)" class="text-center text-xs text-gray-500 cursor-pointer uppercase font-bold">Back to Login</p>
+            <button onclick="handleForgot()" id="forgot-btn" class="w-full py-4 btn-volt">Reset Password</button>
+            <p onclick="showForgot(false)" class="text-center text-xs text-gray-500 cursor-pointer uppercase font-bold mt-4">← Back to Login</p>
         </div>
 
         <div id="register-box" class="hidden w-full max-w-sm space-y-4">
@@ -50,180 +62,295 @@
             <div class="grid grid-cols-2 gap-3"><input type="tel" id="reg-phone" placeholder="Phone*" class="input-dark"><input type="email" id="reg-email" placeholder="Email*" class="input-dark"></div>
             <input type="password" id="reg-pass" placeholder="Password*" class="input-dark">
             <select id="reg-blood" class="input-dark"><option value="">Blood Group*</option><option value="O+">O+</option><option value="B+">B+</option><option value="A+">A+</option><option value="AB+">AB+</option><option value="O-">O-</option><option value="B-">B-</option><option value="A-">A-</option><option value="AB-">AB-</option></select>
-            <button onclick="handleRegister()" class="w-full py-4 btn-volt">Create Profile</button>
-            <p onclick="toggleAuth('login')" class="text-center text-sm text-gray-500 cursor-pointer uppercase font-bold">Back to Login</p>
+            <select id="reg-sport" class="input-dark font-bold text-white border-l-4 border-[#ccff00]"><option value="Football">Primary: Football</option><option value="Cricket">Primary: Cricket</option></select>
+            <button onclick="handleRegister()" id="reg-btn" class="w-full py-4 btn-volt">Create Profile</button>
+            <p onclick="toggleAuth('login')" class="text-center text-sm text-gray-500 cursor-pointer uppercase font-bold mt-4">← Back to Login</p>
         </div>
     </div>
 
     <nav id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-[#0f0f0f] border-r border-[#222] z-[70] sidebar-hidden transition-transform duration-300 shadow-2xl flex flex-col" onmouseleave="toggleSidebar(false)">
         <div class="p-8 border-b border-[#222]"><h2 class="text-2xl font-black text-white italic">SQUAD<span class="text-[#ccff00]">NAV</span></h2></div>
         <div class="flex-grow p-4 space-y-2">
-            <button onclick="switchView('home')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🏠 Home Command</button>
-            <button onclick="switchView('outdoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🌳 Outdoor Turfs</button>
-            <button onclick="switchView('indoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🏟️ Indoor Arenas</button>
-            <button onclick="switchView('rank')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🏅 Global Rankings</button>
-            <button onclick="document.getElementById('about-modal').classList.remove('hidden')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">ℹ️ About Us</button>
+            <button onclick="switchView('home')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold group flex items-center space-x-3"><span class="opacity-50 group-hover:opacity-100">🏠</span><span>Command Center</span></button>
+            <button onclick="switchView('outdoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold group flex items-center space-x-3"><span class="opacity-50 group-hover:opacity-100">🌳</span><span>Outdoor Turfs</span></button>
+            <button onclick="switchView('indoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold group flex items-center space-x-3"><span class="opacity-50 group-hover:opacity-100">Stadium</span><span>Indoor Arenas</span></button>
+            <button onclick="switchView('rank')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold group flex items-center space-x-3"><span class="opacity-50 group-hover:opacity-100">🏅</span><span>Global Rankings</span></button>
+            <button onclick="document.getElementById('about-modal').classList.remove('hidden')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold group flex items-center space-x-3"><span class="opacity-50 group-hover:opacity-100">ℹ️</span><span>About Us</span></button>
+            <button id="admin-nav-btn" onclick="adminClick()" class="hidden w-full text-left p-4 rounded-xl bg-red-500/10 text-red-500 transition font-bold flex items-center space-x-3 italic border border-red-500/20"><span>🛡️</span><span>Admin Protocol</span></button>
         </div>
-        <div class="p-6 border-t border-[#222]"><button onclick="logout()" class="w-full py-3 border border-red-500/50 text-red-500 rounded-xl text-xs font-black uppercase">Terminate Session</button></div>
+        <div class="p-6 border-t border-[#222]"><button onclick="logout()" class="w-full py-4 border border-red-500/30 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10">Terminate Session</button></div>
     </nav>
 
-    <div id="main-content" class="hidden flex flex-col min-h-screen">
+    <div id="main-content" class="hidden flex flex-col min-h-screen relative w-full">
+        
         <header class="p-5 flex justify-between items-center border-b border-[#222] glass sticky top-0 z-50">
             <div class="flex items-center space-x-4">
-                <button onclick="toggleSidebar(true)" class="text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <button onclick="toggleSidebar(true)" class="p-2 hover:bg-white/5 rounded-lg transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
                 <h1 onclick="adminClick()" class="text-2xl font-black italic tracking-tighter cursor-pointer">SQUAD<span class="text-[#ccff00]">UP</span></h1>
             </div>
-            <div id="avatar" class="w-10 h-10 bg-[#141414] border border-[#333] rounded-full flex items-center justify-center text-[#ccff00] font-black">P</div>
+            <div id="avatar" class="w-10 h-10 bg-[#141414] border border-[#333] rounded-full flex items-center justify-center text-[#ccff00] font-black shadow-inner">P</div>
         </header>
 
         <main class="flex-grow p-6 flex flex-col items-center">
             
-            <div id="view-home" class="view-section w-full max-w-5xl min-h-[75vh] rounded-[2.5rem] overflow-hidden relative flex flex-col justify-end p-8 md:p-12 border border-[#222]">
-                <div id="bg1" class="bg-layer bg-active" style="background-image: url('https://images.unsplash.com/photo-1508344928928-7165b67de128?q=80&w=1600')"></div> <div id="bg2" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1544919982-b61976f0ba43?q=80&w=1600')"></div> <div id="bg3" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=1600')"></div> <div id="bg4" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1611091807601-38378393527b?q=80&w=1600')"></div> <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent z-10"></div>
-                <div class="relative z-20 space-y-6">
-                    <p class="text-[#ccff00] font-black text-xs uppercase tracking-widest">Active: <span id="user-name">Athlete</span></p>
-                    <h2 id="quote" class="text-4xl md:text-5xl font-black italic leading-tight text-white drop-shadow-lg">"I have to fight to reach my dream."</h2>
+            <div id="view-home" class="view-section w-full max-w-5xl min-h-[75vh] rounded-[2.5rem] overflow-hidden relative flex flex-col justify-end p-8 md:p-12 border border-[#333] shadow-2xl">
+                
+                <div class="bg-container">
+                    <div id="bg1" class="bg-layer bg-active" style="background-image: url('https://images.unsplash.com/photo-1518605368461-1ee790615566?q=80&w=1600')"></div> <div id="bg2" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=1600')"></div> <div id="bg3" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1544919982-b61976f0ba43?q=80&w=1600')"></div> <div id="bg4" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=1600')"></div> <div id="bg5" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1577054941913-0599507f3118?q=80&w=1600')"></div> </div>
+
+                <div class="relative z-20 space-y-6 max-w-3xl">
+                    <p class="text-[#ccff00] font-black text-xs uppercase tracking-[0.3em] mb-2">Authenticated Athlete: <span id="user-name" class="text-white">Player</span></p>
+                    <h2 id="quote" class="text-4xl md:text-6xl font-black italic leading-tight text-white drop-shadow-2xl">"I have to fight to reach my dream."</h2>
                     <p id="author" class="text-sm text-gray-400 font-bold uppercase tracking-widest">— Lionel Messi</p>
-                    <div class="flex space-x-4 mt-6">
-                        <button onclick="switchView('outdoor')" class="px-8 py-4 btn-volt text-xs">Outdoor Turfs</button>
-                        <button onclick="switchView('indoor')" class="px-8 py-4 border border-white/20 rounded-xl text-xs font-black uppercase">Indoor Arenas</button>
+                    
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <button onclick="switchView('outdoor')" class="px-10 py-5 btn-volt text-[10px] tracking-widest shadow-xl">Deploy Outdoor</button>
+                        <button onclick="switchView('indoor')" class="px-10 py-5 border-2 border-white/20 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest hover:bg-white/10 transition">Indoor Arenas</button>
                     </div>
                 </div>
             </div>
 
-            <div id="view-outdoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-4"></div>
-            <div id="view-indoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-4"></div>
+            <div id="view-outdoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
+            <div id="view-indoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
 
-            <div id="view-rank" class="view-section hidden w-full max-w-2xl space-y-4 py-4">
-                <h2 class="text-3xl font-black italic text-center mb-8 uppercase">Global <span class="text-[#ccff00]">Rankings</span></h2>
-                <div class="glass p-6 rounded-3xl flex justify-between items-center border-l-4 border-yellow-500 shadow-xl"><span>🥇 Rahul Das</span><span class="font-black text-[#ccff00]">42 Sessions</span></div>
+            <div id="view-rank" class="view-section hidden w-full max-w-2xl space-y-4 py-10 text-center">
+                <h2 class="text-4xl font-black italic text-center mb-10 uppercase">Global <span class="text-[#ccff00]">Reputation</span></h2>
+                <div class="glass p-6 rounded-3xl flex justify-between items-center border-l-4 border-yellow-500 shadow-lg"><span>🥇 Rahul Das</span><span class="font-black text-[#ccff00]">42 Sessions</span></div>
                 <div class="glass p-6 rounded-3xl flex justify-between items-center border-l-4 border-gray-400"><span>🥈 Sanjay Bose</span><span class="font-black text-[#ccff00]">38 Sessions</span></div>
                 <div class="glass p-6 rounded-3xl flex justify-between items-center border-l-4 border-orange-700"><span>🥉 Avijit Chandra</span><span class="font-black text-[#ccff00]">35 Sessions</span></div>
             </div>
         </main>
     </div>
 
-    <div id="disc-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
+    <div id="disc-modal" class="hidden fixed inset-0 bg-black/98 z-[200] flex items-center justify-center p-6 backdrop-blur-xl">
         <div class="glass p-10 rounded-[2.5rem] max-w-md text-center border-red-500/20">
-            <h2 class="text-3xl font-black mb-4 text-red-500 uppercase italic">Legal Notice</h2>
-            <p class="text-gray-400 font-medium leading-relaxed mb-10 text-sm">Athletic activities carry inherent physical risks. By entering the arena via SquadUp, you assume full responsibility for your personal safety.</p>
-            <button onclick="closeDisc()" class="w-full py-5 btn-volt text-lg">Acknowledge & Enter</button>
+            <h2 class="text-3xl font-black mb-6 text-red-500 uppercase italic">Legal Notice</h2>
+            <p class="text-gray-400 font-medium leading-relaxed mb-10 text-sm">Athletic activities carry inherent physical risks. By entering the arena via SquadUp, you assume full responsibility for your personal health and safety.</p>
+            <button onclick="closeDisc()" class="w-full py-5 btn-volt text-lg">Acknowledge & Deploy</button>
         </div>
     </div>
 
-    <div id="about-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
+    <div id="about-modal" class="hidden fixed inset-0 bg-black/98 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
         <div class="glass p-10 rounded-[2.5rem] max-w-md text-center">
             <h2 class="text-3xl font-black mb-4 text-[#ccff00] uppercase italic">About SquadUp</h2>
-            <p class="text-gray-400 font-medium leading-relaxed mb-10 text-sm text-left">SquadUp is Kolkata's elite sports aggregator, connecting athletes to premium venues. Our mission is to digitize the arena experience through real-time booking and community-driven rankings.</p>
+            <p class="text-gray-400 font-medium leading-relaxed mb-10 text-sm text-left">SquadUp is Kolkata's elite sports aggregator, connecting athletes to premium venues. Our mission is to digitize the arena experience through real-time booking and community rankings.</p>
             <button onclick="document.getElementById('about-modal').classList.add('hidden')" class="w-full py-4 border border-white/20 rounded-xl font-bold uppercase text-xs">Close Panel</button>
         </div>
     </div>
 
-    <div id="upi-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6">
+    <div id="upi-modal" class="hidden fixed inset-0 bg-black/98 z-[200] flex items-center justify-center p-6">
         <div class="glass p-10 rounded-[2.5rem] max-w-sm text-center">
-            <h2 class="text-2xl font-black mb-6 uppercase italic text-[#ccff00]">Secure Payment</h2>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SquadUpSecure" class="mx-auto mb-10 rounded-3xl border-4 border-white shadow-2xl">
-            <button id="upi-btn" onclick="confirmUPI()" class="w-full py-5 btn-volt text-lg shadow-lg">I Have Paid</button>
-            <button onclick="document.getElementById('upi-modal').classList.add('hidden')" class="mt-4 text-xs text-gray-500 uppercase font-bold tracking-widest">Cancel</button>
+            <h2 class="text-2xl font-black mb-6 uppercase italic text-[#ccff00]">Secure <span class="text-white">Gateway</span></h2>
+            <div class="bg-white p-4 rounded-3xl mx-auto mb-10 shadow-2xl"><img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SquadUpSecure" class="w-full"></div>
+            <button id="upi-btn" onclick="confirmUPI()" class="w-full py-5 btn-volt text-lg shadow-lg">Verify Ledger</button>
+            <button onclick="document.getElementById('upi-modal').classList.add('hidden')" class="mt-6 text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:text-white transition">Abort Transaction</button>
+        </div>
+    </div>
+
+    <div id="booking-modal" class="hidden fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-opacity">
+        <div class="glass rounded-[2rem] w-full max-w-sm p-8 shadow-2xl h-[90vh] sm:h-auto overflow-y-auto relative">
+            <h2 class="text-2xl font-black text-white uppercase italic">Confirm <span class="text-[#ccff00]">Deployment</span></h2>
+            <p id="modal-venue-name" class="text-xs text-gray-400 font-bold mb-6 mt-2 uppercase tracking-widest"></p>
+            
+            <div class="space-y-5">
+                <div class="p-5 bg-[#0a0a0a] border border-[#222] rounded-xl relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#ccff00]"></div>
+                    <label class="text-[10px] font-black text-[#ccff00] uppercase tracking-widest ml-1">Number of Athletes</label>
+                    <input type="number" id="book-players" min="1" value="1" class="input-dark mt-2 font-bold text-xl text-center" oninput="updateLivePrice()" required>
+                    <div class="mt-4 pt-4 border-t border-[#222] flex justify-between items-center">
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">Total Total</span>
+                        <span id="live-total-price" class="text-xl font-black text-white">₹0</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">Play Date (Min 48 Hrs Prior)</label>
+                    <input type="date" id="book-date" class="input-dark mt-1 font-bold text-sm" required>
+                </div>
+                
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Time Designation</label>
+                    <select id="book-time" class="input-dark mt-1 font-bold text-sm"><option value="06:00 AM - 08:00 AM">🌅 Morning: 06:00 - 08:00 AM</option><option value="04:00 PM - 06:00 PM">🌇 Evening: 04:00 - 06:00 PM</option><option value="06:00 PM - 08:00 PM">🌃 Prime: 06:00 - 08:00 PM</option><option value="08:00 PM - 10:00 PM">Stadium Late: 08:00 - 10:00 PM</option></select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Loadout Protocol</label>
+                    <select id="book-gear" class="input-dark mt-1 font-bold text-sm" onchange="updateLivePrice()"><option value="Own Gear">🎒 Bring own gear</option><option value="Need Gear">🛒 Rent from Squad (+₹50)</option></select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Transaction Method</label>
+                    <select id="book-pay" class="input-dark mt-1 font-bold text-sm"><option value="Cash">💵 Cash at Arena</option><option value="UPI">📱 Digital UPI</option></select>
+                </div>
+                
+                <div class="pt-5 space-y-3">
+                    <button onclick="processBookingClick()" id="confirm-btn" class="w-full py-5 btn-volt text-xl">Initialize Run</button>
+                    <button onclick="closeModal('booking-modal')" class="w-full py-3 text-xs font-bold text-gray-500 hover:text-white transition uppercase tracking-widest">Abort</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyVgEQa_GNKBhGmaut3m6zXuSnQD1u_wD153hip39t-bfZvUle6VO-RAV-lL3_06nXP/exec';
+        // ---------------------------------------------------------
+        // IT HEAD SAFEGUARD: PASTE YOUR /exec URL BELOW
+        // ---------------------------------------------------------
+        const scriptURL = 'YOUR_NEW_DEPLOYMENT_URL_HERE';
+        
         let currentUser = null; let activeBg = 1;
+        let currentSport = ""; let currentVenue = ""; let currentPrice = 0; let finalTotal = 0;
 
         const venues = [
-            { name: "Football 5v5 Elite", loc: "Behala", price: 200, type: "outdoor", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800" },
-            { name: "Cricket Box Pro", loc: "Salt Lake", price: 150, type: "outdoor", img: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800" },
-            { name: "Pro Chess Arena", loc: "Alekhine Club", price: 100, type: "indoor", img: "♟️" },
-            { name: "Royal Carrom Club", loc: "Parnasree Pally", price: 100, type: "indoor", img: "🎯" }
+            { id: 'v1', type: 'outdoor', sport: 'Football', name: 'Football 5v5 Elite', loc: 'Behala Sector', img: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800', price: 200, avail: 4, total: 10 },
+            { id: 'v2', type: 'outdoor', sport: 'Cricket', name: 'Cricket Box Pro', loc: 'Salt Lake Stadium', img: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800', price: 150, avail: 8, total: 16 },
+            { id: 'v3', type: 'indoor', sport: 'Chess', name: 'Pro Chess Arena', loc: 'Alekhine Club', img: '♟️', price: 100, avail: 2, total: 2 },
+            { id: 'v4', type: 'indoor', sport: 'Table Tennis', name: 'TT Smash Club', loc: 'Parnasree Pally', img: '🏓', price: 100, avail: 4, total: 4 }
         ];
 
         const sportsQuotes = [
-            { t: "I have to fight to reach my dream.", a: "Lionel Messi" },
-            { t: "I've failed over and over, that is why I succeed.", a: "Michael Jordan" },
-            { t: "Tactics is knowing what to do.", a: "Magnus Carlsen" }
+            { t: "I have to fight to reach my dream.", a: "Lionel Messi", s: "Football" },
+            { t: "Revise your strategy, never your goal.", a: "Cricket Legend", s: "Cricket" },
+            { t: "I've failed over and over, that is why I succeed.", a: "Michael Jordan", s: "Basketball" },
+            { t: "Tactics is knowing what to do.", a: "Magnus Carlsen", s: "Chess" },
+            { t: "Speed is the key to the smash.", a: "TT Master", s: "Table Tennis" }
         ];
-        let qIdx = 0;
+        let quoteIdx = 0;
 
-        // Background Rotator
+        // 🚀 HIGH-VISIBILITY BACKGROUND ROTATOR
         setInterval(() => {
             document.getElementById('bg' + activeBg).classList.remove('bg-active');
-            activeBg = activeBg === 4 ? 1 : activeBg + 1;
+            activeBg = activeBg === 5 ? 1 : activeBg + 1;
             document.getElementById('bg' + activeBg).classList.add('bg-active');
-            qIdx = (qIdx + 1) % sportsQuotes.length;
-            document.getElementById('quote').innerText = `"${sportsQuotes[qIdx].t}"`;
-            document.getElementById('author').innerText = `— ${sportsQuotes[qIdx].a}`;
+            
+            quoteIdx = (quoteIdx + 1) % sportsQuotes.length;
+            const quoteEl = document.getElementById('quote');
+            const authorEl = document.getElementById('author');
+            
+            quoteEl.style.opacity = 0; authorEl.style.opacity = 0;
+            
+            setTimeout(() => {
+                quoteEl.innerText = `"${sportsQuotes[quoteIdx].t}"`;
+                authorEl.innerText = `— ${sportsQuotes[quoteIdx].a}`;
+                quoteEl.style.opacity = 1; authorEl.style.opacity = 1;
+            }, 500);
         }, 6000);
 
-        function toggleSidebar(show) {
-            const side = document.getElementById('sidebar');
-            side.classList.toggle('sidebar-hidden', !show);
-            side.classList.toggle('sidebar-visible', show);
-        }
+        function toggleSidebar(show) { const side = document.getElementById('sidebar'); side.classList.toggle('sidebar-hidden', !show); side.classList.toggle('sidebar-visible', show); }
+        function showForgot(show) { document.getElementById('login-box').classList.toggle('hidden', show); document.getElementById('forgot-box').classList.toggle('hidden', !show); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function closeDisc() { document.getElementById('disc-modal').classList.add('hidden'); localStorage.setItem('su_disc_accepted', 'true'); }
+        function logout() { localStorage.clear(); location.reload(); }
 
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('view-' + view).classList.remove('hidden');
-            if(view === 'outdoor' || view === 'indoor') renderContent(view);
+            const target = document.getElementById('view-' + view);
+            target.classList.remove('hidden');
+            if(view === 'outdoor' || view === 'indoor') renderList(view);
             toggleSidebar(false);
             window.scrollTo(0, 0);
         }
 
-        function renderContent(type) {
-            const cont = document.getElementById('view-' + type);
-            cont.innerHTML = '';
+        function renderList(type) {
+            const cont = document.getElementById('view-' + type); cont.innerHTML = '';
             venues.filter(v => v.type === type).forEach(v => {
-                const media = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333]">${v.img}</div>`;
-                cont.innerHTML += `<div class="glass p-8 rounded-[2.5rem] border border-white/5 hover:border-[#ccff00]/40 transition-all duration-500">
-                    ${media}
+                const visual = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333]">${v.img}</div>`;
+                let badgeClass = v.avail < 3 ? 'badge-volt !border-red-500 !text-red-500' : 'badge-volt';
+                
+                cont.innerHTML += `<div class="glass p-8 rounded-[2rem] border border-white/5 hover:border-[#ccff00]/40 transition-all duration-500 relative">
+                    <div class="absolute top-6 right-6 ${badgeClass} text-[9px] px-2 py-0.5 rounded border uppercase font-bold tracking-widest z-10">${v.avail}/${v.total}</div>
+                    ${visual}
                     <h3 class="text-2xl font-black italic uppercase">${v.name}</h3>
-                    <p class="text-xs text-gray-500 font-bold tracking-widest mt-1">${v.loc}</p>
-                    <div class="flex items-center justify-between mt-8">
-                        <p class="text-2xl font-black text-[#ccff00]">₹${v.price}</p>
-                        <button onclick="openBooking()" class="px-8 py-3 btn-volt text-[10px] tracking-tighter">Secure Slot</button>
+                    <p class="text-xs text-gray-500 font-bold tracking-widest mt-2">${v.loc}</p>
+                    <div class="flex items-center justify-between mt-8 pt-6 border-t border-[#222]">
+                        <p class="text-2xl font-black text-[#ccff00]">₹${v.price}<span class="text-[10px] text-white/30 ml-1">/ Slot</span></p>
+                        <button onclick="openBooking('${v.sport}', '${v.name}', ${v.price})" class="px-8 py-3 btn-volt text-[10px] tracking-tighter">Deploy</button>
                     </div>
                 </div>`;
             });
         }
 
         async function handleLogin() {
-            const id = document.getElementById('login-id').value;
-            const pass = document.getElementById('login-pass').value;
+            const id = document.getElementById('login-id').value; const pass = document.getElementById('login-pass').value;
+            const btn = document.getElementById('login-btn'); if(!id || !pass) return alert("Required data missing.");
+            btn.innerText = "AUTHENTICATING...";
+            
             const res = await fetchJSONP({ action: 'login', loginId: id, password: pass });
             if(res.status === 'success') {
                 currentUser = res.user;
                 document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-name').innerText = currentUser.name;
+                document.getElementById('user-name').innerText = currentUser.name.split(' ')[0];
                 document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
-                document.getElementById('disc-modal').classList.remove('hidden');
-            } else alert(res.msg);
+                if(currentUser.role === 'owner' || currentUser.role === 'staff') document.getElementById('admin-nav-btn').classList.remove('hidden');
+                if(localStorage.getItem('su_disc_accepted') !== 'true') document.getElementById('disc-modal').classList.remove('hidden');
+            } else { alert(res.msg); btn.innerText = "Initialize Session"; }
         }
 
         async function handleForgot() {
-            const email = document.getElementById('forgot-email').value;
-            const newPw = document.getElementById('forgot-new-pass').value;
-            if(!email || !newPw) return alert("All fields required.");
+            const email = document.getElementById('forgot-email').value; const newPw = document.getElementById('forgot-new-pass').value;
+            if(!email || !newPw) return alert("Fields required.");
+            const btn = document.getElementById('forgot-btn'); btn.innerText = "Locking Ledger...";
             const res = await fetchJSONP({ action: 'forgot', email: email, newPassword: newPw });
-            alert(res.msg);
-            if(res.status === 'success') showForgot(false);
+            alert(res.msg); if(res.status === 'success') showForgot(false);
+            btn.innerText = "Reset Password";
         }
 
         function handleRegister() {
-            const data = { action: 'register', name: document.getElementById('reg-name').value, phone: document.getElementById('reg-phone').value, email: document.getElementById('reg-email').value, password: document.getElementById('reg-pass').value };
-            fetchJSONP(data).then(() => { alert("Account created! Login now."); location.reload(); });
+            const data = { action: 'register', name: document.getElementById('reg-name').value, phone: document.getElementById('reg-phone').value, email: document.getElementById('reg-email').value, password: document.getElementById('reg-pass').value, sport: document.getElementById('reg-sport').value, bloodGroup: document.getElementById('reg-blood').value };
+            if(!data.name || !data.phone || !data.email) return alert("Missing required data.");
+            const btn = document.getElementById('reg-btn'); btn.innerText = "Creating Profile...";
+            fetchJSONP(data).then(() => { alert("Registration Locked. Please Login."); location.reload(); });
+        }
+
+        function openBooking(sport, venue, price) { 
+            if(currentUser.role === 'staff' || currentUser.role === 'owner') return alert("Admin account cannot book sessions.");
+            currentSport = sport; currentVenue = venue; currentPrice = price; 
+            document.getElementById('modal-venue-name').innerText = venue;
+            document.getElementById('book-players').value = 1;
+            updateLivePrice();
+            const today = new Date(); today.setDate(today.getDate() + 2);
+            document.getElementById('book-date').value = today.toISOString().split('T')[0];
+            document.getElementById('booking-modal').classList.remove('hidden'); 
+        }
+
+        function updateLivePrice() {
+            let players = parseInt(document.getElementById('book-players').value) || 1;
+            finalTotal = players * currentPrice;
+            if(document.getElementById('book-gear').value === "Need Gear") finalTotal += 50;
+            document.getElementById('live-total-price').innerText = `₹${finalTotal}`;
+            document.getElementById('upi-amount').innerText = `₹${finalTotal}`;
+        }
+
+        function processBookingClick() {
+            const date = document.getElementById('book-date').value; if(!date) return alert("Invalid Date Protocol.");
+            if(document.getElementById('book-pay').value === "UPI") {
+                document.getElementById('booking-modal').classList.add('hidden');
+                document.getElementById('upi-modal').classList.remove('hidden');
+            } else { finishBooking(); }
         }
 
         function confirmUPI() {
-            const btn = document.getElementById('upi-btn');
-            btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true;
-            setTimeout(() => { alert("Payment Verified!"); document.getElementById('upi-modal').classList.add('hidden'); btn.innerText = "I Have Paid"; btn.disabled = false; }, 3500);
+            const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true;
+            setTimeout(() => { finishBooking(); btn.innerText = "Verify Ledger"; btn.disabled = false; }, 3500);
+        }
+
+        async function finishBooking() {
+            const date = document.getElementById('book-date').value; const time = document.getElementById('book-time').value;
+            const players = document.getElementById('book-players').value; const gear = document.getElementById('book-gear').value;
+            const pay = document.getElementById('book-pay').value;
+
+            const res = await fetchJSONP({ action: 'book', name: currentUser.name, phone: currentUser.phone, game: currentSport, venue: currentVenue, playDate: date, timeSlot: time, playerCount: players, equipment: gear, payMethod: pay, totalAmount: finalTotal });
+            
+            if(res.status === 'success') {
+                alert(`Deployment Confirmed: ₹${finalTotal} protocol locked.`);
+                location.reload();
+            } else { alert("Booking failed: " + res.msg); }
         }
 
         function fetchJSONP(params) {
             return new Promise((resolve) => {
-                const callbackName = 'jsonp_' + Date.now() + Math.floor(Math.random()*1000);
+                if (scriptURL === 'YOUR_NEW_DEPLOYMENT_URL_HERE') { alert("IT Head Alert: URL missing on Line 660."); return resolve({status:'error'}); }
+                const callbackName = 'jsonp_' + Date.now();
                 const script = document.createElement('script');
                 window[callbackName] = (data) => { resolve(data); document.body.removeChild(script); delete window[callbackName]; };
                 params.callback = callbackName;
@@ -231,12 +358,7 @@
                 document.body.appendChild(script);
             });
         }
-
         function toggleAuth(type) { document.getElementById('login-box').classList.toggle('hidden', type !== 'login'); document.getElementById('register-box').classList.toggle('hidden', type !== 'register'); document.getElementById('forgot-box').classList.add('hidden'); }
-        function showForgot(show) { document.getElementById('login-box').classList.toggle('hidden', show); document.getElementById('forgot-box').classList.toggle('hidden', !show); }
-        function openBooking() { document.getElementById('upi-modal').classList.remove('hidden'); }
-        function closeDisc() { document.getElementById('disc-modal').classList.add('hidden'); }
-        function logout() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
