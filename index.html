@@ -118,17 +118,31 @@
             <div id="view-admin" class="view-section hidden w-full max-w-2xl py-10">
                 <h2 class="text-3xl font-black italic text-center mb-4 text-[#ccff00]">ADMIN COMMAND CENTER</h2>
                 <p id="admin-notice" class="text-center text-sm text-gray-400 mb-10">Staff Protocol Active</p>
+                
                 <div id="staff-panel" class="glass p-8 rounded-[2rem] border border-white/10 space-y-6">
-                    <h3 class="text-xl font-bold uppercase tracking-widest border-b border-white/5 pb-4">Manage Venues</h3>
+                    <h3 class="text-xl font-bold uppercase tracking-widest border-b border-white/5 pb-4">Manage Existing Venues</h3>
                     <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Select Target Arena</label><select id="admin-venue-select" class="input-dark py-3" onchange="loadAdminVenueData()"></select></div>
                     <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Max Slot Capacity</label><input type="number" id="admin-cap" class="input-dark py-3"></div>
                     <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Time Shifts (Comma Separated)</label><input type="text" id="admin-times" class="input-dark py-3 text-sm"></div>
                     <button onclick="updateVenue()" id="admin-btn" class="w-full py-4 btn-volt shadow-lg">Push Update to Server</button>
                 </div>
+                
                 <div id="owner-panel" class="hidden mt-8 p-8 border border-red-500/30 rounded-[2rem] bg-red-500/5 text-center">
-                    <h3 class="text-xl font-black text-red-500 uppercase italic mb-4">God-Mode Overhaul</h3>
-                    <p class="text-sm text-gray-400 mb-6">Owner Protocol Active. Overhaul pricing, themes, and user accounts directly via the Master Database.</p>
-                    <a href="https://docs.google.com/spreadsheets/d/1_T9g0gS3O-t-cZf9y6F_h5m3V2N8K_B5" target="_blank" class="block w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:bg-red-700 transition">Open Master Google Sheet</a>
+                    <h3 class="text-2xl font-black text-red-500 uppercase italic mb-2">God-Mode: Deploy New Arena</h3>
+                    <p class="text-sm text-gray-400 mb-6">Instantly push a new venue directly to the live website.</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 text-left mb-6">
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Sport (e.g. Football 5v5)</label><input type="text" id="new-v-sport" class="input-dark py-2 border-red-500/30 focus:border-red-500"></div>
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Arena Name</label><input type="text" id="new-v-name" class="input-dark py-2 border-red-500/30 focus:border-red-500"></div>
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Location Area</label><input type="text" id="new-v-loc" class="input-dark py-2 border-red-500/30 focus:border-red-500"></div>
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Price (₹)</label><input type="number" id="new-v-price" class="input-dark py-2 border-red-500/30 focus:border-red-500"></div>
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Type</label><select id="new-v-type" class="input-dark py-2 border-red-500/30 focus:border-red-500"><option value="outdoor">Outdoor</option><option value="indoor">Indoor</option></select></div>
+                        <div><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Status</label><select id="new-v-status" class="input-dark py-2 border-red-500/30 focus:border-red-500"><option value="Active">Active</option><option value="Pending">Pending</option></select></div>
+                        <div class="col-span-2"><label class="text-[9px] text-red-500 font-bold uppercase ml-2">Image URL or Emoji (e.g. 🏟️)</label><input type="text" id="new-v-img" placeholder="https://..." class="input-dark py-2 border-red-500/30 focus:border-red-500"></div>
+                    </div>
+
+                    <button onclick="deployNewVenue()" id="add-venue-btn" class="w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:bg-red-700 transition">Push Live to Network</button>
+                    <a href="https://docs.google.com/spreadsheets/d/1_T9g0gS3O-t-cZf9y6F_h5m3V2N8K_B5" target="_blank" class="block w-full py-3 mt-4 border border-red-500/30 text-red-500 font-bold uppercase text-xs rounded-xl hover:bg-red-500/10 transition">Open Master Google Sheet</a>
                 </div>
             </div>
         </main>
@@ -247,9 +261,9 @@
             const res = await fetchJSONP({ action: 'login', loginId: document.getElementById(idField).value, password: document.getElementById(passField).value });
             
             if(res.status === 'success') {
-                currentUser = res.user; window.venues = res.venues; window.themeConfig = res.settings;
+                currentUser = res.user; window.venues = res.venues || []; window.themeConfig = res.settings;
                 
-                // 🚀 IT HEAD PROTOCOL: Merge missing Pending Venues seamlessly
+                // IT HEAD SAFEGUARD: Force Pending Venues to always exist
                 const pendingVenues = [
                     { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", cap: 10, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800", times: "" },
                     { sport: "Tennis Elite", name: "Grand Slam Court", loc: "Pending Deployment", price: 300, type: "outdoor", cap: 4, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800", times: "" },
@@ -290,6 +304,19 @@
             alert(res.msg); btn.innerText = "Push Update to Server"; if(res.status==='success') location.reload(); 
         }
 
+        async function deployNewVenue() {
+            const btn = document.getElementById('add-venue-btn'); btn.innerText = "DEPLOYING TO LEDGER...";
+            const data = {
+                action: 'addVenue', vSport: document.getElementById('new-v-sport').value, vName: document.getElementById('new-v-name').value,
+                vLoc: document.getElementById('new-v-loc').value, vPrice: document.getElementById('new-v-price').value,
+                vType: document.getElementById('new-v-type').value, vStatus: document.getElementById('new-v-status').value, vImg: document.getElementById('new-v-img').value
+            };
+            if(!data.vName || !data.vSport) { alert("Arena Name and Sport are strictly required."); btn.innerText = "Push Live to Network"; return; }
+            const res = await fetchJSONP(data);
+            alert(res.msg); btn.innerText = "Push Live to Network";
+            if(res.status === 'success') location.reload(); 
+        }
+
         async function handleRegister() {
             const btn = document.getElementById('reg-btn'); btn.innerText = "GENERATING ID...";
             const phoneVal = document.getElementById('reg-phone').value;
@@ -307,7 +334,7 @@
                 const isP = v.status === "Pending";
                 const visual = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl ${isP ? 'grayscale opacity-40' : ''}">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333] ${isP ? 'opacity-40' : ''}">${v.img}</div>`;
                 
-                // 🚀 IT HEAD FIX: Correct Google Maps Official Search API
+                // IT HEAD FIX: Official Google Maps Search API
                 const btn = isP ? `<button class="w-full py-4 bg-white/5 text-gray-500 rounded-xl text-[8px] font-black uppercase tracking-widest cursor-not-allowed border border-white/5">Proceeding: Pending Deployment</button>` : 
                 `<div class="flex space-x-2"><a href="https://www.google.com/maps/search/?api=1&query=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
                 
@@ -343,13 +370,13 @@
             document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; 
             document.getElementById('book-count').max = activeVenue.cap; updatePrice(); 
             
-            // 🚀 IT HEAD FIX: Dynamic Emoji Injector for Time Slots
+            // IT HEAD FIX: Dynamic Emoji Injector
             const timeSelect = document.getElementById('book-time'); timeSelect.innerHTML = '';
             if(activeVenue.times) {
                 activeVenue.times.split(',').forEach(t => { 
                     let emoji = '⚽';
-                    if (t.includes('AM') || t.includes('Morning')) emoji = '🌅';
-                    else if (t.includes('04:00') || t.includes('16:00')) emoji = '🌆';
+                    if (t.includes('AM') || t.includes('Morning') || t.includes('06:00-08:00 AM')) emoji = '🌅';
+                    else if (t.includes('04:00') || t.includes('16:00') || t.includes('04:00-06:00 PM')) emoji = '🌆';
                     else if (t.includes('06:00 PM') || t.includes('18:00') || t.includes('Prime')) emoji = '🌃';
                     timeSelect.innerHTML += `<option value="${t}">${emoji} ${t}</option>`; 
                 });
