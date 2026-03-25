@@ -32,14 +32,22 @@
     <div id="hover-zone" class="fixed inset-y-0 left-0 w-4 z-[60]" onmouseenter="toggleSidebar(true)"></div>
 
     <div id="auth-overlay" class="fixed inset-0 bg-[#0a0a0a] z-[100] flex flex-col items-center justify-center p-6 overflow-y-auto">
-        <h1 class="text-6xl font-black italic mb-10 tracking-tighter" style="text-shadow: 0 0 15px rgba(204,255,0,0.3);">SQUAD<span class="text-[#ccff00]">UP</span></h1>
+        <h1 onclick="ghostTrigger()" class="text-6xl font-black italic mb-10 tracking-tighter cursor-pointer select-none" style="text-shadow: 0 0 15px rgba(204,255,0,0.3);">SQUAD<span class="text-[#ccff00]">UP</span></h1>
         
         <div id="login-box" class="w-full max-w-sm space-y-4">
-            <input type="text" id="login-id" placeholder="Phone or Admin ID" class="input-dark">
+            <input type="text" id="login-id" placeholder="Phone or Email" class="input-dark">
             <input type="password" id="login-pass" placeholder="Password" class="input-dark">
             <p onclick="showForgot(true)" class="text-[10px] text-gray-500 font-bold uppercase cursor-pointer hover:text-white text-right px-1">Forgot Password?</p>
-            <button onclick="handleLogin()" id="login-btn" class="w-full py-4 btn-volt text-lg shadow-lg">Login</button>
+            <button onclick="handleLogin('player')" id="login-btn" class="w-full py-4 btn-volt text-lg shadow-lg">Login</button>
             <p class="text-center text-sm text-gray-500 uppercase font-bold mt-4">New Athlete? <span onclick="toggleAuth('register')" class="text-[#ccff00] cursor-pointer hover:underline">Request Access</span></p>
+        </div>
+
+        <div id="admin-login-box" class="hidden w-full max-w-sm space-y-4 p-6 border border-red-500/30 rounded-[2rem] bg-red-500/5">
+            <p class="text-xs text-red-500 font-black uppercase text-center tracking-widest mb-4">Classified Access</p>
+            <input type="text" id="admin-login-id" placeholder="Clearance Code" class="input-dark border-red-500/30 focus:border-red-500">
+            <input type="password" id="admin-login-pass" placeholder="Passkey" class="input-dark border-red-500/30 focus:border-red-500">
+            <button onclick="handleLogin('admin')" id="admin-btn-login" class="w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-lg">Override Protocol</button>
+            <p onclick="hideAdminLogin()" class="text-center text-xs text-gray-500 cursor-pointer font-bold uppercase mt-2">Abort Override</p>
         </div>
 
         <div id="register-box" class="hidden w-full max-w-sm space-y-3">
@@ -112,24 +120,20 @@
             <div id="view-admin" class="view-section hidden w-full max-w-2xl py-10">
                 <h2 class="text-3xl font-black italic text-center mb-4 text-[#ccff00]">ADMIN COMMAND CENTER</h2>
                 <p id="admin-notice" class="text-center text-sm text-gray-400 mb-10">Staff Protocol Active</p>
-                
                 <div id="staff-panel" class="glass p-8 rounded-[2rem] border border-white/10 space-y-6">
                     <h3 class="text-xl font-bold uppercase tracking-widest border-b border-white/5 pb-4">Manage Venues</h3>
                     <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Select Target Arena</label><select id="admin-venue-select" class="input-dark py-3" onchange="loadAdminVenueData()"></select></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Max Slot Capacity</label><input type="number" id="admin-cap" class="input-dark py-3"></div>
-                    </div>
-                    <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Available Time Shifts (Comma Separated)</label><input type="text" id="admin-times" class="input-dark py-3 text-sm"></div>
+                    <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Max Slot Capacity</label><input type="number" id="admin-cap" class="input-dark py-3"></div>
+                    <div><label class="text-[10px] text-gray-500 font-bold uppercase mb-2 block">Time Shifts (Comma Separated)</label><input type="text" id="admin-times" class="input-dark py-3 text-sm"></div>
                     <button onclick="updateVenue()" id="admin-btn" class="w-full py-4 btn-volt shadow-lg">Push Update to Server</button>
                 </div>
-
                 <div id="owner-panel" class="hidden mt-8 p-8 border border-red-500/30 rounded-[2rem] bg-red-500/5 text-center">
                     <h3 class="text-xl font-black text-red-500 uppercase italic mb-4">God-Mode Overhaul</h3>
-                    <p class="text-sm text-gray-400 mb-6">Owner Protocol Active. You have full clearance to overhaul pricing, sports names, images, and user accounts directly via the Master Database.</p>
+                    <p class="text-sm text-gray-400 mb-6">Owner Protocol Active. Overhaul pricing, themes, and user accounts directly via the Master Database.</p>
                     <a href="https://docs.google.com/spreadsheets/d/1_T9g0gS3O-t-cZf9y6F_h5m3V2N8K_B5" target="_blank" class="block w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)]">Open Master Google Sheet</a>
                 </div>
             </div>
-
+            
         </main>
     </div>
 
@@ -183,6 +187,9 @@
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; // <--- PASTE URL HERE
         let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
+        
+        // 🚀 IT HEAD INJECTION: Ghost Trigger Variables
+        let tapCount = 0; let tapTimer;
 
         const legends = [
             { img: 'https://images.unsplash.com/photo-1508344928928-7165b67de128', q: "I have to fight to reach my dream.", a: "Lionel Messi" },
@@ -192,6 +199,17 @@
             { img: 'https://images.unsplash.com/photo-1544919982-b61976f0ba43', q: "I've failed over and over again, that is why I succeed.", a: "Michael Jordan" },
             { img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b', q: "Tactics is knowing what to do.", a: "Magnus Carlsen" }
         ];
+
+        // 🚀 IT HEAD INJECTION: Ghost Trigger Function
+        function ghostTrigger() {
+            tapCount++; clearTimeout(tapTimer); tapTimer = setTimeout(() => tapCount = 0, 1500);
+            if(tapCount === 5) {
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('admin-login-box').classList.remove('hidden');
+                tapCount = 0;
+            }
+        }
+        function hideAdminLogin() { document.getElementById('admin-login-box').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); }
 
         function initBackgrounds() {
             const engine = document.getElementById('bg-engine');
@@ -206,26 +224,40 @@
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.remove('bg-active');
             activeBgIdx = (activeBgIdx + 1) % legends.length;
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.add('bg-active');
-            document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
-            document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
+            
+            // 🚀 IT HEAD INJECTION: Check Theme Engine for overrides
+            if(!window.themeConfig || !window.themeConfig.HeroQuote) {
+                document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
+                document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
+            }
         }
         function initDatePicker() {
             const dateInput = document.getElementById('book-date'); const today = new Date(); today.setDate(today.getDate() + 2);
             dateInput.min = today.toISOString().split('T')[0]; dateInput.value = today.toISOString().split('T')[0];
         }
 
-        async function handleLogin() {
-            const btn = document.getElementById('login-btn'); btn.innerText = "AUTHENTICATING..."; btn.classList.add('logging-in');
-            const res = await fetchJSONP({ action: 'login', loginId: document.getElementById('login-id').value, password: document.getElementById('login-pass').value });
+        async function handleLogin(type) {
+            // 🚀 IT HEAD INJECTION: Route login based on type
+            const btn = type === 'admin' ? document.getElementById('admin-btn-login') : document.getElementById('login-btn');
+            const idField = type === 'admin' ? 'admin-login-id' : 'login-id';
+            const passField = type === 'admin' ? 'admin-login-pass' : 'login-pass';
+            
+            btn.innerText = "AUTHENTICATING..."; btn.classList.add('logging-in');
+            const res = await fetchJSONP({ action: 'login', loginId: document.getElementById(idField).value, password: document.getElementById(passField).value });
+            
             if(res.status === 'success') {
-                currentUser = res.user; window.venues = res.venues; // LIVE DATA INJECTED
+                currentUser = res.user; window.venues = res.venues; window.themeConfig = res.settings;
+                
+                // 🚀 IT HEAD INJECTION: Apply SaaS Theme Engine CSS
+                if(res.settings && res.settings.BrandColor) { document.documentElement.style.setProperty('--volt', res.settings.BrandColor); }
+                if(res.settings && res.settings.HeroQuote) { document.getElementById('quote').innerText = `"${res.settings.HeroQuote}"`; document.getElementById('author').innerText = `— ${res.settings.HeroAuthor}`; }
                 
                 document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-name').innerText = currentUser.name.split(' ')[0];
                 document.getElementById('dropdown-name').innerText = currentUser.name;
                 document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
                 
-                // Admin Routing
+                // 🚀 IT HEAD INJECTION: Admin Visibility Routing
                 if(currentUser.role === 'owner' || currentUser.role === 'staff') {
                     document.getElementById('nav-admin').classList.remove('hidden');
                     document.getElementById('admin-notice').innerText = currentUser.role === 'owner' ? "God-Mode Activated" : "Staff Protocol Active";
@@ -234,9 +266,10 @@
                 } else { document.getElementById('disc-modal').classList.remove('hidden'); }
                 
                 initBackgrounds(); initDatePicker(); renderRankings();
-            } else { alert(res.msg); btn.innerText = "Login"; btn.classList.remove('logging-in'); }
+            } else { alert(res.msg); btn.innerText = type === 'admin' ? "OVERRIDE PROTOCOL" : "LOGIN"; btn.classList.remove('logging-in'); }
         }
 
+        // 🚀 IT HEAD INJECTION: Admin Control Panel Functions
         function populateAdminSelect() {
             const select = document.getElementById('admin-venue-select'); select.innerHTML = '';
             window.venues.forEach(v => { select.innerHTML += `<option value="${v.name}">${v.sport} | ${v.name}</option>`; });
@@ -246,7 +279,7 @@
         function loadAdminVenueData() {
             const selected = document.getElementById('admin-venue-select').value;
             const v = window.venues.find(ven => ven.name === selected);
-            if(v) { document.getElementById('admin-cap').value = v.cap; document.getElementById('admin-times').value = v.times; }
+            if(v) { document.getElementById('admin-cap').value = v.cap; document.getElementById('admin-times').value = v.times || "06:00-08:00 AM,04:00-06:00 PM,06:00-08:00 PM,08:00-10:00 PM"; }
         }
 
         async function updateVenue() {
@@ -254,10 +287,9 @@
             const data = { action: 'updateVenue', name: document.getElementById('admin-venue-select').value, cap: document.getElementById('admin-cap').value, times: document.getElementById('admin-times').value };
             const res = await fetchJSONP(data);
             alert(res.msg); btn.innerText = "Push Update to Server";
-            if(res.status==='success') location.reload(); // Refresh to pull new database
+            if(res.status==='success') location.reload(); 
         }
 
-        // ... (Registration & Forgot Password functions remain the same) ...
         async function handleRegister() {
             const btn = document.getElementById('reg-btn'); btn.innerText = "GENERATING ID...";
             const phoneVal = document.getElementById('reg-phone').value;
@@ -298,9 +330,9 @@
             document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; 
             document.getElementById('book-count').max = activeVenue.cap; updatePrice(); 
             
-            // Populate Dynamic Times
+            // 🚀 IT HEAD INJECTION: Populate Dynamic Times from Google Sheet
             const timeSelect = document.getElementById('book-time'); timeSelect.innerHTML = '';
-            activeVenue.times.split(',').forEach(t => { timeSelect.innerHTML += `<option value="${t}">${t}</option>`; });
+            if(activeVenue.times) { activeVenue.times.split(',').forEach(t => { timeSelect.innerHTML += `<option value="${t}">${t}</option>`; }); }
 
             document.getElementById('booking-modal').classList.remove('hidden'); 
         }
@@ -317,7 +349,7 @@
 
         function fetchJSONP(params) { return new Promise((resolve) => { const callbackName = 'jsonp_' + Date.now() + Math.floor(Math.random()*1000); const script = document.createElement('script'); window[callbackName] = (data) => { resolve(data); document.body.removeChild(script); delete window[callbackName]; }; params.callback = callbackName; script.src = scriptURL + '?' + new URLSearchParams(params).toString(); document.body.appendChild(script); }); }
         function toggleSidebar(show) { document.getElementById('sidebar').classList.toggle('sidebar-hidden', !show); document.getElementById('sidebar').classList.toggle('sidebar-visible', show); }
-        function toggleAuth(type) { document.getElementById('login-box').classList.toggle('hidden', type !== 'login'); document.getElementById('register-box').classList.toggle('hidden', type !== 'register'); }
+        function toggleAuth(type) { document.getElementById('login-box').classList.toggle('hidden', type !== 'login'); document.getElementById('register-box').classList.toggle('hidden', type !== 'register'); document.getElementById('admin-login-box').classList.add('hidden'); }
         function showForgot(show) { document.getElementById('login-box').classList.toggle('hidden', show); document.getElementById('forgot-box').classList.toggle('hidden', !show); }
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); toggleSidebar(false); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
