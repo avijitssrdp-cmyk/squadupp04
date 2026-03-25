@@ -101,7 +101,6 @@
         </header>
 
         <main class="flex-grow p-6 flex flex-col items-center">
-            
             <div id="view-home" class="view-section w-full max-w-5xl min-h-[75vh] rounded-[2.5rem] overflow-hidden relative flex flex-col justify-end p-8 md:p-12 border border-[#333] shadow-2xl">
                 <div class="bg-container" id="bg-engine"></div>
                 <div class="relative z-20 space-y-6">
@@ -114,7 +113,6 @@
 
             <div id="view-outdoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
             <div id="view-indoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
-            
             <div id="view-rank" class="view-section hidden w-full max-w-3xl py-10"><h2 class="text-3xl font-black italic text-center mb-10">GLOBAL REPUTATION</h2><div id="rank-list" class="space-y-4"></div></div>
 
             <div id="view-admin" class="view-section hidden w-full max-w-2xl py-10">
@@ -130,10 +128,9 @@
                 <div id="owner-panel" class="hidden mt-8 p-8 border border-red-500/30 rounded-[2rem] bg-red-500/5 text-center">
                     <h3 class="text-xl font-black text-red-500 uppercase italic mb-4">God-Mode Overhaul</h3>
                     <p class="text-sm text-gray-400 mb-6">Owner Protocol Active. Overhaul pricing, themes, and user accounts directly via the Master Database.</p>
-                    <a href="https://docs.google.com/spreadsheets/d/1_T9g0gS3O-t-cZf9y6F_h5m3V2N8K_B5" target="_blank" class="block w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)]">Open Master Google Sheet</a>
+                    <a href="https://docs.google.com/spreadsheets/d/1_T9g0gS3O-t-cZf9y6F_h5m3V2N8K_B5" target="_blank" class="block w-full py-4 bg-red-600 text-white font-black uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:bg-red-700 transition">Open Master Google Sheet</a>
                 </div>
             </div>
-            
         </main>
     </div>
 
@@ -141,8 +138,10 @@
         <div class="glass p-10 rounded-[2.5rem] max-w-lg w-full text-center border-red-500/20 shadow-2xl">
             <h2 class="text-4xl font-black mb-6 text-red-500 uppercase italic">Legal Disclaimer</h2>
             <div class="text-gray-400 text-sm leading-relaxed mb-10 text-left space-y-5 overflow-y-auto max-h-72 pr-2">
-                <p><b>1. Assumption of Personal Risk:</b> The use of facilities involves physical activities that carry inherent risks.</p>
-                <p><b>2. Digital Aggregator Scope:</b> SquadUp acts strictly as a booking interface. We do not manage the physical venues.</p>
+                <p><b>1. Assumption of Personal Risk:</b> The use of facilities listed on SquadUp involves physical activities that carry inherent risks. By entering any arena, you acknowledge that SquadUp is not liable for any bodily injury, health complications, or medical emergencies.</p>
+                <p><b>2. Digital Aggregator Scope:</b> SquadUp acts strictly as a booking interface. We do not own or manage the physical venues. Quality of facilities, lighting, or staff conduct at the venue is the sole responsibility of the respective venue management.</p>
+                <p><b>3. Mandatory Reputation Protocol:</b> To maintain an elite environment, every session requires a mandatory peer review. Failure to adhere to professional conduct may result in a permanent reputation ban.</p>
+                <p><b>4. Booking & Payment Verification:</b> UPI transactions are verified against live bank ledgers. Any fraudulent confirmation attempt will result in immediate legal reporting and account termination.</p>
             </div>
             <button onclick="closeModal('disc-modal')" class="w-full py-5 btn-volt text-xl shadow-lg">Acknowledge & Deploy</button>
         </div>
@@ -151,7 +150,7 @@
     <div id="about-modal" class="hidden fixed inset-0 bg-black/98 z-[200] flex items-center justify-center p-6 backdrop-blur-xl">
         <div class="glass p-10 rounded-[2.5rem] max-w-md w-full text-center">
             <h2 class="text-3xl font-black mb-6 text-[#ccff00] uppercase italic">About SquadUp</h2>
-            <p class="text-gray-400 text-sm leading-relaxed mb-10">Kolkata's premier digital sports network. We are building the infrastructure for the next generation of elite athletes.</p>
+            <p class="text-gray-400 text-sm leading-relaxed mb-10 text-left">SquadUp is Kolkata's premier digital sports network. We are building the infrastructure for the next generation of elite athletes, providing real-time access to the city's finest turfs and arenas with a focus on competitive skill and professional behavior.</p>
             <button onclick="closeModal('about-modal')" class="w-full py-4 border border-white/20 rounded-xl font-bold uppercase text-xs">Return to Dugout</button>
         </div>
     </div>
@@ -167,7 +166,8 @@
                     <p class="text-right text-xs mt-2 text-gray-400">Total: <span id="total-price" class="text-white font-black">₹0</span></p>
                 </div>
                 <input type="date" id="book-date" class="input-dark text-sm">
-                <select id="book-time" class="input-dark text-sm"></select> <select id="book-pay" class="input-dark text-sm"><option value="Cash">Cash Protocol</option><option value="UPI">Digital UPI</option></select>
+                <select id="book-time" class="input-dark text-sm"></select>
+                <select id="book-pay" class="input-dark text-sm"><option value="Cash">Cash Protocol</option><option value="UPI">Digital UPI</option></select>
                 <button onclick="processBooking()" class="w-full py-4 btn-volt shadow-lg">Initialize Run</button>
                 <button onclick="closeModal('booking-modal')" class="w-full py-2 text-xs font-bold text-gray-500 uppercase hover:text-white">Cancel Slot Booking</button>
             </div>
@@ -185,10 +185,12 @@
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; // <--- PASTE URL HERE
-        let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
+        // ---------------------------------------------------------
+        // IT HEAD SAFEGUARD: PASTE YOUR /exec URL BELOW
+        // ---------------------------------------------------------
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; 
         
-        // 🚀 IT HEAD INJECTION: Ghost Trigger Variables
+        let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
         let tapCount = 0; let tapTimer;
 
         const legends = [
@@ -197,10 +199,12 @@
             { img: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', q: "Don't stop when you are tired. Stop when you are done.", a: "Sachin Tendulkar" },
             { img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da', q: "Self-belief and hard work will always earn you success.", a: "Virat Kohli" },
             { img: 'https://images.unsplash.com/photo-1544919982-b61976f0ba43', q: "I've failed over and over again, that is why I succeed.", a: "Michael Jordan" },
-            { img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b', q: "Tactics is knowing what to do.", a: "Magnus Carlsen" }
+            { img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b', q: "Tactics is knowing what to do.", a: "Magnus Carlsen" },
+            { img: 'https://images.unsplash.com/photo-1611091807601-38378393527b', q: "Focus on the striker, the rest will follow.", a: "Carrom Pro" },
+            { img: 'https://images.unsplash.com/photo-1577054941913-0599507f3118', q: "The speed of the ball is the speed of your mind.", a: "TT Master" },
+            { img: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0', q: "Success is a journey, not a destination.", a: "Roger Federer" }
         ];
 
-        // 🚀 IT HEAD INJECTION: Ghost Trigger Function
         function ghostTrigger() {
             tapCount++; clearTimeout(tapTimer); tapTimer = setTimeout(() => tapCount = 0, 1500);
             if(tapCount === 5) {
@@ -224,8 +228,6 @@
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.remove('bg-active');
             activeBgIdx = (activeBgIdx + 1) % legends.length;
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.add('bg-active');
-            
-            // 🚀 IT HEAD INJECTION: Check Theme Engine for overrides
             if(!window.themeConfig || !window.themeConfig.HeroQuote) {
                 document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
                 document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
@@ -237,7 +239,6 @@
         }
 
         async function handleLogin(type) {
-            // 🚀 IT HEAD INJECTION: Route login based on type
             const btn = type === 'admin' ? document.getElementById('admin-btn-login') : document.getElementById('login-btn');
             const idField = type === 'admin' ? 'admin-login-id' : 'login-id';
             const passField = type === 'admin' ? 'admin-login-pass' : 'login-pass';
@@ -248,16 +249,20 @@
             if(res.status === 'success') {
                 currentUser = res.user; window.venues = res.venues; window.themeConfig = res.settings;
                 
-                // 🚀 IT HEAD INJECTION: Apply SaaS Theme Engine CSS
+                // 🚀 IT HEAD PROTOCOL: Merge missing Pending Venues seamlessly
+                const pendingVenues = [
+                    { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", cap: 10, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800", times: "" },
+                    { sport: "Tennis Elite", name: "Grand Slam Court", loc: "Pending Deployment", price: 300, type: "outdoor", cap: 4, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800", times: "" },
+                    { sport: "Table Tennis", name: "TT Pro Arena", loc: "Pending Deployment", price: 100, type: "indoor", cap: 4, status: "Pending", map: "", img: "🏓", times: "" }
+                ];
+                pendingVenues.forEach(p => { if(!window.venues.find(v => v.name === p.name)) window.venues.push(p); });
+
                 if(res.settings && res.settings.BrandColor) { document.documentElement.style.setProperty('--volt', res.settings.BrandColor); }
                 if(res.settings && res.settings.HeroQuote) { document.getElementById('quote').innerText = `"${res.settings.HeroQuote}"`; document.getElementById('author').innerText = `— ${res.settings.HeroAuthor}`; }
                 
                 document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-name').innerText = currentUser.name.split(' ')[0];
-                document.getElementById('dropdown-name').innerText = currentUser.name;
-                document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
+                document.getElementById('user-name').innerText = currentUser.name.split(' ')[0]; document.getElementById('dropdown-name').innerText = currentUser.name; document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
                 
-                // 🚀 IT HEAD INJECTION: Admin Visibility Routing
                 if(currentUser.role === 'owner' || currentUser.role === 'staff') {
                     document.getElementById('nav-admin').classList.remove('hidden');
                     document.getElementById('admin-notice').innerText = currentUser.role === 'owner' ? "God-Mode Activated" : "Staff Protocol Active";
@@ -269,25 +274,20 @@
             } else { alert(res.msg); btn.innerText = type === 'admin' ? "OVERRIDE PROTOCOL" : "LOGIN"; btn.classList.remove('logging-in'); }
         }
 
-        // 🚀 IT HEAD INJECTION: Admin Control Panel Functions
         function populateAdminSelect() {
             const select = document.getElementById('admin-venue-select'); select.innerHTML = '';
             window.venues.forEach(v => { select.innerHTML += `<option value="${v.name}">${v.sport} | ${v.name}</option>`; });
             loadAdminVenueData();
         }
-
         function loadAdminVenueData() {
             const selected = document.getElementById('admin-venue-select').value;
             const v = window.venues.find(ven => ven.name === selected);
             if(v) { document.getElementById('admin-cap').value = v.cap; document.getElementById('admin-times').value = v.times || "06:00-08:00 AM,04:00-06:00 PM,06:00-08:00 PM,08:00-10:00 PM"; }
         }
-
         async function updateVenue() {
             const btn = document.getElementById('admin-btn'); btn.innerText = "UPDATING SERVER...";
-            const data = { action: 'updateVenue', name: document.getElementById('admin-venue-select').value, cap: document.getElementById('admin-cap').value, times: document.getElementById('admin-times').value };
-            const res = await fetchJSONP(data);
-            alert(res.msg); btn.innerText = "Push Update to Server";
-            if(res.status==='success') location.reload(); 
+            const res = await fetchJSONP({ action: 'updateVenue', name: document.getElementById('admin-venue-select').value, cap: document.getElementById('admin-cap').value, times: document.getElementById('admin-times').value });
+            alert(res.msg); btn.innerText = "Push Update to Server"; if(res.status==='success') location.reload(); 
         }
 
         async function handleRegister() {
@@ -306,22 +306,35 @@
             window.venues.filter(v => v.type === type).forEach(v => {
                 const isP = v.status === "Pending";
                 const visual = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl ${isP ? 'grayscale opacity-40' : ''}">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333] ${isP ? 'opacity-40' : ''}">${v.img}</div>`;
+                
+                // 🚀 IT HEAD FIX: Correct Google Maps Official Search API
                 const btn = isP ? `<button class="w-full py-4 bg-white/5 text-gray-500 rounded-xl text-[8px] font-black uppercase tracking-widest cursor-not-allowed border border-white/5">Proceeding: Pending Deployment</button>` : 
-                `<div class="flex space-x-2"><a href="http://googleusercontent.com/maps.google.com/search?q=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
+                `<div class="flex space-x-2"><a href="https://www.google.com/maps/search/?api=1&query=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
                 
                 cont.innerHTML += `<div class="glass p-8 rounded-[2rem] border border-white/5 relative hover:border-[#ccff00]/30 transition-all">
                     ${isP ? '' : `<div class="absolute top-6 right-6 text-[9px] font-black text-[#ccff00] uppercase tracking-widest px-2 py-1 border border-[#ccff00]/30 rounded bg-black/50 backdrop-blur-md">Active</div>`}
-                    ${visual}<p class="text-xs text-[#ccff00] font-black uppercase tracking-widest mb-1">${v.sport}</p><h3 class="text-2xl font-black italic uppercase text-white">${v.name}</h3><p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-8">${v.loc}</p>
-                    <div class="flex items-center justify-between mt-8 border-t border-white/5 pt-6"><p class="text-2xl font-black text-[#ccff00]">₹${v.price}</p>${btn}</div></div>`;
+                    ${visual}
+                    <p class="text-xs text-[#ccff00] font-black uppercase tracking-widest mb-1">${v.sport}</p>
+                    <h3 class="text-2xl font-black italic uppercase text-white">${v.name}</h3>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-8">${v.loc}</p>
+                    <div class="flex items-center justify-between mt-8 border-t border-white/5 pt-6">
+                        <p class="text-2xl font-black text-[#ccff00]">₹${v.price}</p>${btn}
+                    </div></div>`;
             });
         }
 
         function renderRankings() {
+            const uName = currentUser ? currentUser.name : "Player";
+            const uSkill = currentUser && currentUser.skill ? currentUser.skill : "Intermediate";
             const list = document.getElementById('rank-list');
             list.innerHTML = `
                 <div class="glass p-6 rounded-3xl border-l-4 border-yellow-500 shadow-lg">
                     <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">Rahul Das</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pro | Football</span></div><span class="font-black text-[#ccff00]">42 Sessions</span></div>
-                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★☆</div></div></div>
+                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★☆</div></div></div>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-[#ccff00]/50 mt-4 opacity-80">
+                    <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">${uName}</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${uSkill} | Active Athlete</span></div><span class="font-black text-white">35 Sessions</span></div>
+                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★★</div></div></div>
                 </div>`;
         }
 
@@ -330,9 +343,17 @@
             document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; 
             document.getElementById('book-count').max = activeVenue.cap; updatePrice(); 
             
-            // 🚀 IT HEAD INJECTION: Populate Dynamic Times from Google Sheet
+            // 🚀 IT HEAD FIX: Dynamic Emoji Injector for Time Slots
             const timeSelect = document.getElementById('book-time'); timeSelect.innerHTML = '';
-            if(activeVenue.times) { activeVenue.times.split(',').forEach(t => { timeSelect.innerHTML += `<option value="${t}">${t}</option>`; }); }
+            if(activeVenue.times) {
+                activeVenue.times.split(',').forEach(t => { 
+                    let emoji = '⚽';
+                    if (t.includes('AM') || t.includes('Morning')) emoji = '🌅';
+                    else if (t.includes('04:00') || t.includes('16:00')) emoji = '🌆';
+                    else if (t.includes('06:00 PM') || t.includes('18:00') || t.includes('Prime')) emoji = '🌃';
+                    timeSelect.innerHTML += `<option value="${t}">${emoji} ${t}</option>`; 
+                });
+            } else { timeSelect.innerHTML = `<option value="Morning">🌅 06:00-08:00 AM</option>`; }
 
             document.getElementById('booking-modal').classList.remove('hidden'); 
         }
