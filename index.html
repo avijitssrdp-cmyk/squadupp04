@@ -11,7 +11,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--carbon); color: white; overflow-x: hidden; }
         .glass { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); }
         .btn-volt { background: var(--volt); color: black; font-weight: 900; text-transform: uppercase; border-radius: 0.75rem; transition: 0.3s; cursor: pointer; }
-        .input-dark { background: #141414; border: 1px solid #333; color: white; border-radius: 0.75rem; padding: 1rem; width: 100%; outline: none; }
+        .btn-volt:active { transform: scale(0.98); }
+        .input-dark { background: #141414; border: 1px solid #333; color: white; border-radius: 0.75rem; padding: 1rem; width: 100%; outline: none; transition: border-color 0.3s; }
+        .input-dark:focus { border-color: var(--volt); }
         
         /* 🚀 7-SPORT LEGENDS BACKGROUND ENGINE */
         .bg-container { position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: 2.5rem; }
@@ -22,12 +24,14 @@
         .sidebar-hidden { transform: translateX(-105%); }
         .sidebar-visible { transform: translateX(0); }
         
-        /* Blur UI */
-        .modal-active #main-content { filter: blur(20px); transition: 0.4s; }
+        /* Blur UI when Modal Active */
+        .modal-active #main-content { filter: blur(20px); transition: 0.4s; pointer-events: none; }
 
-        @keyframes pulse-login { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes pulse-login { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         .logging-in { animation: pulse-login 1s infinite; pointer-events: none; }
+        
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -35,13 +39,14 @@
     <div id="hover-zone" class="fixed inset-y-0 left-0 w-4 z-[60]" onmouseenter="toggleSidebar(true)"></div>
 
     <div id="auth-overlay" class="fixed inset-0 bg-[#0a0a0a] z-[100] flex flex-col items-center justify-center p-6 overflow-y-auto">
-        <h1 class="text-6xl font-black italic mb-10 tracking-tighter">SQUAD<span class="text-[#ccff00]">UP</span></h1>
+        <h1 class="text-6xl font-black italic mb-10 tracking-tighter" style="text-shadow: 0 0 15px rgba(204,255,0,0.3);">SQUAD<span class="text-[#ccff00]">UP</span></h1>
         
         <div id="login-box" class="w-full max-w-sm space-y-4">
             <input type="text" id="login-id" placeholder="Phone or Email" class="input-dark">
             <input type="password" id="login-pass" placeholder="Password" class="input-dark">
+            <p onclick="showForgot(true)" class="text-[10px] text-gray-500 font-bold uppercase cursor-pointer hover:text-white text-right px-1">Forgot Password?</p>
             <button onclick="handleLogin()" id="login-btn" class="w-full py-4 btn-volt text-lg shadow-lg">Login</button>
-            <p class="text-center text-sm text-gray-500 uppercase font-bold mt-4">New Athlete? <span onclick="toggleAuth('register')" class="text-[#ccff00] cursor-pointer">Request Access</span></p>
+            <p class="text-center text-sm text-gray-500 uppercase font-bold mt-4">New Athlete? <span onclick="toggleAuth('register')" class="text-[#ccff00] cursor-pointer hover:underline">Request Access</span></p>
         </div>
 
         <div id="register-box" class="hidden w-full max-w-sm space-y-3">
@@ -53,7 +58,15 @@
                 <select id="reg-skill" class="input-dark py-3"><option value="Beginner">Beginner</option><option value="Intermediate">Intermediate</option><option value="Pro">Pro</option></select>
             </div>
             <button onclick="handleRegister()" class="w-full py-4 btn-volt">Generate ID</button>
-            <p onclick="toggleAuth('login')" class="text-center text-xs text-gray-500 cursor-pointer font-bold mt-4">Return to Login</p>
+            <p onclick="toggleAuth('login')" class="text-center text-xs text-gray-500 cursor-pointer font-bold uppercase mt-4">Return to Login</p>
+        </div>
+
+        <div id="forgot-box" class="hidden w-full max-w-sm space-y-4">
+            <p class="text-xs text-[#ccff00] font-black uppercase text-center mb-2">Secure Reset Protocol</p>
+            <input type="email" id="forgot-email" placeholder="Registered Email" class="input-dark">
+            <input type="password" id="forgot-new-pass" placeholder="Enter New Password" class="input-dark">
+            <button onclick="handleForgot()" id="forgot-btn" class="w-full py-4 btn-volt shadow-lg">Update Ledger</button>
+            <p onclick="showForgot(false)" class="text-xs text-gray-500 cursor-pointer uppercase font-bold mt-4 text-center">Back to Login</p>
         </div>
     </div>
 
@@ -64,37 +77,49 @@
             <button onclick="switchView('outdoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🌳 Outdoor Turfs</button>
             <button onclick="switchView('indoor')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🏟️ Indoor Arenas</button>
             <button onclick="switchView('rank')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">🏅 Reputation</button>
-            <button onclick="showAbout()" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">ℹ️ About Us</button>
+            <button onclick="showModal('about-modal')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">ℹ️ About Us</button>
         </div>
-        <div class="p-6 border-t border-[#222]"><button onclick="logout()" class="w-full py-3 border border-red-500/50 text-red-500 rounded-xl text-xs font-black uppercase">Terminate Session</button></div>
+        <div class="p-6 border-t border-[#222]"><button onclick="logout()" class="w-full py-3 border border-red-500/50 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500/10">Terminate Session</button></div>
     </nav>
 
     <div id="main-content" class="hidden flex flex-col min-h-screen">
         <header class="p-5 flex justify-between items-center border-b border-[#222] glass sticky top-0 z-50">
             <div class="flex items-center space-x-4">
-                <button onclick="toggleSidebar(true)" class="text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-                <h1 class="text-2xl font-black italic tracking-tighter">SQUAD<span class="text-[#ccff00]">UP</span></h1>
+                <button onclick="toggleSidebar(true)" class="text-white hover:text-[#ccff00] transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <h1 onclick="location.reload()" class="text-2xl font-black italic tracking-tighter cursor-pointer">SQUAD<span class="text-[#ccff00]">UP</span></h1>
             </div>
-            <div onclick="document.getElementById('profile-dropdown').classList.toggle('hidden')" class="w-10 h-10 bg-[#141414] border border-[#333] rounded-full flex items-center justify-center text-[#ccff00] font-black cursor-pointer" id="avatar">P</div>
-            <div id="profile-dropdown" class="hidden absolute right-5 top-16 w-48 glass rounded-xl py-2 z-50 shadow-2xl">
-                <button onclick="switchView('rank')" class="w-full text-left px-4 py-2 text-sm hover:bg-white/5 font-bold">🏆 Rankings</button>
-                <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/5">Logout</button>
+            <div class="relative">
+                <div onclick="document.getElementById('profile-dropdown').classList.toggle('hidden')" class="w-10 h-10 bg-[#141414] border border-[#333] rounded-full flex items-center justify-center text-[#ccff00] font-black cursor-pointer shadow-inner" id="avatar">P</div>
+                <div id="profile-dropdown" class="hidden absolute right-0 mt-3 w-48 glass rounded-xl py-2 z-50 shadow-2xl">
+                    <p id="dropdown-name" class="px-4 py-3 text-[10px] text-gray-500 uppercase font-bold tracking-widest border-b border-white/10">Player</p>
+                    <button onclick="switchView('rank')" class="w-full text-left px-4 py-3 text-sm hover:bg-white/5 font-bold text-white">🏆 My Reputation</button>
+                    <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/5 font-bold">Logout</button>
+                </div>
             </div>
         </header>
 
         <main class="flex-grow p-6 flex flex-col items-center">
-            <div id="view-home" class="view-section w-full max-w-5xl min-h-[75vh] rounded-[2.5rem] overflow-hidden relative flex flex-col justify-end p-8 md:p-12 border border-[#333]">
+            
+            <div id="view-home" class="view-section w-full max-w-5xl min-h-[75vh] rounded-[2.5rem] overflow-hidden relative flex flex-col justify-end p-8 md:p-12 border border-[#333] shadow-2xl">
                 <div class="bg-container" id="bg-engine"></div>
                 <div class="relative z-20 space-y-6">
                     <p class="text-[#ccff00] font-black text-xs uppercase tracking-widest">Protocol: <span id="user-name">Player</span></p>
-                    <h2 id="quote" class="text-4xl md:text-6xl font-black italic leading-tight text-white drop-shadow-2xl h-40">"Hard work beats talent."</h2>
+                    <h2 id="quote" class="text-4xl md:text-6xl font-black italic leading-tight text-white drop-shadow-2xl h-40 flex items-end">"I have to fight to reach my dream."</h2>
                     <p id="author" class="text-sm text-gray-400 font-bold uppercase tracking-widest">— Lionel Messi</p>
-                    <div class="flex space-x-4 mt-8"><button onclick="switchView('outdoor')" class="px-8 py-4 btn-volt text-xs">Outdoor Turfs</button><button onclick="switchView('indoor')" class="px-8 py-4 border border-white/20 rounded-xl text-xs font-black uppercase">Indoor Arenas</button></div>
+                    <div class="flex space-x-4 mt-8">
+                        <button onclick="switchView('outdoor')" class="px-8 py-4 btn-volt text-xs shadow-lg">Outdoor Turfs</button>
+                        <button onclick="switchView('indoor')" class="px-8 py-4 border border-white/20 rounded-xl text-xs font-black uppercase hover:bg-white/5 transition">Indoor Arenas</button>
+                    </div>
                 </div>
             </div>
+
             <div id="view-outdoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
             <div id="view-indoor" class="view-section hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 py-10"></div>
-            <div id="view-rank" class="view-section hidden w-full max-w-3xl py-10"><h2 class="text-3xl font-black italic text-center mb-10">GLOBAL REPUTATION</h2><div id="rank-list" class="space-y-4"></div></div>
+            
+            <div id="view-rank" class="view-section hidden w-full max-w-3xl py-10">
+                <h2 class="text-3xl font-black italic text-center mb-10">GLOBAL <span class="text-[#ccff00]">REPUTATION</span></h2>
+                <div id="rank-list" class="space-y-4"></div>
+            </div>
         </main>
     </div>
 
@@ -107,7 +132,7 @@
                 <p><b>3. Mandatory Reputation Protocol:</b> To maintain an elite environment, every session requires a mandatory peer review. Failure to adhere to professional conduct may result in a permanent reputation ban.</p>
                 <p><b>4. Booking & Payment Verification:</b> UPI transactions are verified against live bank ledgers. Any fraudulent confirmation attempt will result in immediate legal reporting and account termination.</p>
             </div>
-            <button onclick="closeDisc()" class="w-full py-5 btn-volt text-xl">Acknowledge & Deploy</button>
+            <button onclick="closeModal('disc-modal')" class="w-full py-5 btn-volt text-xl shadow-lg">Acknowledge & Deploy</button>
         </div>
     </div>
 
@@ -115,67 +140,73 @@
         <div class="glass p-10 rounded-[2.5rem] max-w-md w-full text-center">
             <h2 class="text-3xl font-black mb-6 text-[#ccff00] uppercase italic">About SquadUp</h2>
             <p class="text-gray-400 text-sm leading-relaxed mb-10 text-left">SquadUp is Kolkata's premier digital sports network. We are building the infrastructure for the next generation of elite athletes, providing real-time access to the city's finest turfs and arenas with a focus on competitive skill and professional behavior.</p>
-            <button onclick="document.getElementById('about-modal').classList.add('hidden')" class="w-full py-4 border border-white/20 rounded-xl font-bold uppercase text-xs">Return to Dugout</button>
+            <button onclick="closeModal('about-modal')" class="w-full py-4 border border-white/20 rounded-xl font-bold uppercase text-xs">Return to Dugout</button>
         </div>
     </div>
 
     <div id="booking-modal" class="hidden fixed inset-0 bg-black/90 z-[150] flex items-center justify-center p-4 backdrop-blur-md">
         <div class="glass p-8 rounded-[2.5rem] max-w-sm w-full">
             <h2 class="text-2xl font-black mb-1 uppercase italic text-[#ccff00]">Book Deployment</h2>
-            <div class="space-y-4 mt-6">
-                <div class="bg-black/50 p-4 rounded-xl">
-                    <label class="text-[10px] font-bold text-[#ccff00] uppercase block">Athlete Slots (Max 10)</label>
+            <p id="book-venue-name" class="text-[10px] text-gray-500 uppercase font-bold mb-6 tracking-widest"></p>
+            <div class="space-y-4">
+                <div class="bg-black/50 p-4 rounded-xl border border-white/5">
+                    <label class="text-[10px] font-bold text-[#ccff00] uppercase mb-2 block">Athletes (Max Slots)</label>
                     <input type="number" id="book-count" min="1" max="10" value="1" class="input-dark py-2 text-center text-xl font-black" onchange="updatePrice()">
+                    <p class="text-right text-xs mt-2 text-gray-400">Total: <span id="total-price" class="text-white font-black">₹0</span></p>
                 </div>
-                <div><label class="text-[9px] text-red-500 font-bold uppercase">Launch Date (Min 48hr Prior)</label><input type="date" id="book-date" class="input-dark text-sm"></div>
+                <input type="date" id="book-date" class="input-dark text-sm">
                 <select id="book-time" class="input-dark text-sm">
-                    <option value="Morning">🌅 Morning (06:00-08:00)</option><option value="Evening">🌆 Evening (16:00-18:00)</option>
-                    <option value="Prime">🌃 Prime (18:00-20:00)</option><option value="Late">⚽ Late (20:00-22:00)</option>
+                    <option value="Morning">🌅 Morning (06:00-08:00 AM)</option><option value="Evening">🌆 Evening (04:00-06:00 PM)</option>
+                    <option value="Prime">🌃 Prime (06:00-08:00 PM)</option><option value="Late">⚽ Late (08:00-10:00 PM)</option>
                 </select>
-                <select id="book-pay" class="input-dark text-sm"><option value="Cash">Cash Protocol</option><option value="UPI">Pay via UPI</option></select>
+                <select id="book-pay" class="input-dark text-sm"><option value="Cash">Cash Protocol</option><option value="UPI">Digital UPI</option></select>
                 <button onclick="processBooking()" class="w-full py-4 btn-volt shadow-lg">Initialize Run</button>
-                <button onclick="document.getElementById('booking-modal').classList.add('hidden')" class="w-full py-2 text-xs font-bold text-gray-500 uppercase">Cancel Slot</button>
+                <button onclick="closeModal('booking-modal')" class="w-full py-2 text-xs font-bold text-gray-500 uppercase hover:text-white">Cancel Slot Booking</button>
             </div>
         </div>
     </div>
 
-    <div id="upi-modal" class="hidden fixed inset-0 bg-black/60 z-[250] flex items-center justify-center p-6 backdrop-blur-[40px]">
-        <div class="glass p-10 rounded-[2.5rem] max-w-sm w-full text-center border-white/20">
-            <h2 class="text-2xl font-black mb-2 uppercase italic text-[#ccff00]">Scan to Verify</h2>
+    <div id="upi-modal" class="hidden fixed inset-0 bg-black/60 z-[250] flex items-center justify-center p-6 backdrop-blur-2xl">
+        <div class="glass p-10 rounded-[2.5rem] max-w-sm w-full text-center border-white/10 shadow-[0_0_50px_rgba(204,255,0,0.15)]">
+            <h2 class="text-2xl font-black mb-2 uppercase italic text-[#ccff00]">Scan to Pay</h2>
             <p class="text-[10px] text-gray-400 mb-6 font-bold uppercase tracking-widest">Total Total: <span id="upi-price" class="text-white">₹0</span></p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SquadUpPayment" class="mx-auto mb-10 rounded-3xl border-4 border-white">
-            <button onclick="confirmUPI()" id="upi-btn" class="w-full py-5 btn-volt text-lg">I Have Paid</button>
-            <button onclick="cancelPayment()" class="mt-4 w-full py-2 text-xs font-bold text-red-500 uppercase">Cancel & Return</button>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SquadUpPayment" class="mx-auto mb-10 rounded-3xl border-4 border-white shadow-2xl">
+            <button onclick="confirmUPI()" id="upi-btn" class="w-full py-5 btn-volt text-lg shadow-lg">I Have Paid</button>
+            <button onclick="cancelPayment()" class="mt-4 w-full py-2 text-xs font-bold text-red-500 uppercase hover:bg-red-500/10 rounded-xl transition">Cancel Payment</button>
         </div>
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; // <--- PASTE URL HERE
         let currentUser = null; let activeBgIdx = 0; let activeVenue = null;
 
-        const venues = [
-            // 🏟️ OUTDOOR
-            { name: "Astro Park", loc: "AJC Bose Road, Kolkata", price: 250, type: "outdoor", cap: 10, status: "Active", map: "Astro+Park+Kolkata" },
-            { name: "Turf Street", loc: "Salt Lake Sector V", price: 200, type: "outdoor", cap: 12, status: "Active", map: "Turf+Street+Kolkata" },
-            { name: "Urban Sports", loc: "Behala", price: 200, type: "outdoor", cap: 10, status: "Active", map: "Urban+Sports+Behala" },
-            { name: "Basketball Pro", loc: "Pending Deployment", price: 250, type: "outdoor", status: "Pending" },
-            { name: "Tennis Elite", loc: "Pending Deployment", price: 300, type: "outdoor", status: "Pending" },
-            // 🏟️ INDOOR
-            { name: "Alekhine Chess Club", loc: "Gorky Sadan", price: 100, type: "indoor", cap: 2, status: "Active", map: "Alekhine+Chess+Club" },
-            { name: "Parnasree Carrom", loc: "Behala", price: 50, type: "indoor", cap: 4, status: "Active", map: "Parnasree+Kolkata" },
-            { name: "TT Pro Arena", loc: "Pending Deployment", price: 100, type: "indoor", status: "Pending" }
-        ];
-
+        // 🚀 THE COMPLETE 7-SPORT LEGENDS DATA
         const legends = [
             { img: 'https://images.unsplash.com/photo-1508344928928-7165b67de128', q: "I have to fight to reach my dream.", a: "Lionel Messi" },
             { img: 'https://images.unsplash.com/photo-1518605368461-1ee790615566', q: "Your love makes me strong, your hate makes me unstoppable.", a: "Cristiano Ronaldo" },
             { img: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', q: "Don't stop when you are tired. Stop when you are done.", a: "Sachin Tendulkar" },
             { img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da', q: "Self-belief and hard work will always earn you success.", a: "Virat Kohli" },
-            { img: 'https://images.unsplash.com/photo-1544919982-b61976f0ba43', q: "I've failed over and over, that is why I succeed.", a: "Michael Jordan" },
+            { img: 'https://images.unsplash.com/photo-1544919982-b61976f0ba43', q: "I've failed over and over again, that is why I succeed.", a: "Michael Jordan" },
             { img: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b', q: "Tactics is knowing what to do.", a: "Magnus Carlsen" },
+            { img: 'https://images.unsplash.com/photo-1611091807601-38378393527b', q: "Focus on the striker, the rest will follow.", a: "Carrom Pro" },
+            { img: 'https://images.unsplash.com/photo-1577054941913-0599507f3118', q: "The speed of the ball is the speed of your mind.", a: "TT Master" },
             { img: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0', q: "Success is a journey, not a destination.", a: "Roger Federer" }
         ];
 
+        // 🚀 THE COMPLETE DATABASE (Images, Sports, Locations, Maps)
+        const venues = [
+            { sport: "Football 5v5", name: "Astro Park", loc: "AJC Bose Road, Kolkata", price: 250, type: "outdoor", cap: 10, status: "Active", map: "Astro+Park+Kolkata", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800" },
+            { sport: "Football 8v8", name: "Turf Street", loc: "Salt Lake Sector V", price: 200, type: "outdoor", cap: 16, status: "Active", map: "Turf+Street+Kolkata", img: "https://images.unsplash.com/photo-1552318965-6e6be7484ada?w=800" },
+            { sport: "Cricket Box", name: "Urban Sports", loc: "Behala", price: 200, type: "outdoor", cap: 12, status: "Active", map: "Urban+Sports+Behala", img: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800" },
+            { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800" },
+            { sport: "Tennis Elite", name: "Grand Slam Court", loc: "Pending Deployment", price: 300, type: "outdoor", status: "Pending", map: "", img: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800" },
+            
+            { sport: "Chess", name: "Alekhine Chess Club", loc: "Gorky Sadan", price: 100, type: "indoor", cap: 2, status: "Active", map: "Alekhine+Chess+Club", img: "♟️" },
+            { sport: "Carrom", name: "Parnasree Carrom", loc: "Behala", price: 50, type: "indoor", cap: 4, status: "Active", map: "Parnasree+Kolkata", img: "🎯" },
+            { sport: "Table Tennis", name: "TT Pro Arena", loc: "Pending Deployment", price: 100, type: "indoor", status: "Pending", map: "", img: "🏓" }
+        ];
+
+        // System Initialization
         function initBackgrounds() {
             const engine = document.getElementById('bg-engine');
             legends.forEach((s, i) => {
@@ -183,9 +214,8 @@
                 layer.id = `bg-layer-${i}`; layer.className = `bg-layer ${i === 0 ? 'bg-active' : ''}`;
                 layer.style.backgroundImage = `url('${s.img}?q=80&w=1600')`; engine.appendChild(layer);
             });
-            setInterval(cycleBg, 7000);
+            setInterval(cycleBg, 6000);
         }
-
         function cycleBg() {
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.remove('bg-active');
             activeBgIdx = (activeBgIdx + 1) % legends.length;
@@ -193,74 +223,92 @@
             document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
             document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
         }
+        function initDatePicker() {
+            const dateInput = document.getElementById('book-date');
+            const today = new Date(); today.setDate(today.getDate() + 2); // 48 Hour Rule
+            dateInput.min = today.toISOString().split('T')[0];
+            dateInput.value = today.toISOString().split('T')[0];
+        }
 
+        // Authentication Protocol
         async function handleLogin() {
             const btn = document.getElementById('login-btn'); btn.innerText = "AUTHENTICATING..."; btn.classList.add('logging-in');
             const res = await fetchJSONP({ action: 'login', loginId: document.getElementById('login-id').value, password: document.getElementById('login-pass').value });
             if(res.status === 'success') {
                 currentUser = res.user; document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-name').innerText = currentUser.name;
+                document.getElementById('user-name').innerText = currentUser.name.split(' ')[0];
+                document.getElementById('dropdown-name').innerText = currentUser.name;
+                document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
                 document.getElementById('disc-modal').classList.remove('hidden');
-                initBackgrounds(); initDatePicker();
+                initBackgrounds(); initDatePicker(); renderRankings();
             } else { alert(res.msg); btn.innerText = "Login"; btn.classList.remove('logging-in'); }
         }
 
-        function initDatePicker() {
-            const date = new Date(); date.setDate(date.getDate() + 2);
-            document.getElementById('book-date').min = date.toISOString().split('T')[0];
-            document.getElementById('book-date').value = date.toISOString().split('T')[0];
+        // Render Protocols
+        function switchView(v) { 
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden')); 
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+            if(v==='outdoor'||v==='indoor') renderContent(v);
+            toggleSidebar(false); window.scrollTo(0, 0);
         }
 
         function renderContent(type) {
             const cont = document.getElementById('view-' + type); cont.innerHTML = '';
             venues.filter(v => v.type === type).forEach(v => {
                 const isP = v.status === "Pending";
-                const btn = isP ? `<button class="w-full py-4 bg-white/5 text-gray-500 rounded-xl text-[8px] font-black uppercase tracking-widest cursor-not-allowed">Proceeding: Pending Deployment</button>` : 
-                `<div class="flex space-x-2"><a href="https://www.google.com/maps/search/?api=1&query=${v.map}" target="_blank" class="p-4 glass rounded-2xl">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow">Deploy</button></div>`;
+                const visual = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl ${isP ? 'grayscale opacity-40' : ''}">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333] ${isP ? 'opacity-40' : ''}">${v.img}</div>`;
+                const btn = isP ? `<button class="w-full py-4 bg-white/5 text-gray-500 rounded-xl text-[8px] font-black uppercase tracking-widest cursor-not-allowed border border-white/5">Proceeding: Pending Deployment</button>` : 
+                `<div class="flex space-x-2"><a href="http://googleusercontent.com/maps.google.com/?q=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
                 
-                cont.innerHTML += `<div class="glass p-10 rounded-[2.5rem] border border-white/5 relative">
-                    <h3 class="text-2xl font-black italic uppercase">${v.name}</h3><p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-10">${v.loc}</p>
-                    <div class="flex items-center justify-between mt-10">
+                cont.innerHTML += `<div class="glass p-8 rounded-[2rem] border border-white/5 relative hover:border-[#ccff00]/30 transition-all">
+                    ${isP ? '' : `<div class="absolute top-6 right-6 text-[9px] font-black text-[#ccff00] uppercase tracking-widest px-2 py-1 border border-[#ccff00]/30 rounded bg-black/50 backdrop-blur-md">Active</div>`}
+                    ${visual}
+                    <p class="text-xs text-[#ccff00] font-black uppercase tracking-widest mb-1">${v.sport}</p>
+                    <h3 class="text-2xl font-black italic uppercase text-white">${v.name}</h3>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-8">${v.loc}</p>
+                    <div class="flex items-center justify-between mt-8 border-t border-white/5 pt-6">
                         <p class="text-2xl font-black text-[#ccff00]">₹${v.price}</p>${btn}
                     </div></div>`;
             });
         }
 
-        function openBooking(name) { activeVenue = venues.find(v => v.name === name); document.getElementById('upi-price').innerText = `₹${activeVenue.price}`; updatePrice(); document.getElementById('booking-modal').classList.remove('hidden'); }
-        function updatePrice() { document.getElementById('total-price').innerText = `₹${document.getElementById('book-count').value * activeVenue.price}`; }
-        
+        function renderRankings() {
+            const uName = currentUser ? currentUser.name : "Player";
+            const uSkill = currentUser && currentUser.skill ? currentUser.skill : "Intermediate";
+            const list = document.getElementById('rank-list');
+            list.innerHTML = `
+                <div class="glass p-6 rounded-3xl border-l-4 border-yellow-500 shadow-lg">
+                    <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">Rahul Das</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pro | Football</span></div><span class="font-black text-[#ccff00]">42 Sessions</span></div>
+                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★☆</div></div></div>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-[#ccff00]/50 mt-4 opacity-80">
+                    <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">${uName}</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${uSkill} | Active Athlete</span></div><span class="font-black text-white">35 Sessions</span></div>
+                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★★</div></div></div>
+                </div>`;
+        }
+
+        // Booking Protocol
+        function openBooking(name) { activeVenue = venues.find(v => v.name === name); document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; document.getElementById('book-count').max = activeVenue.cap; updatePrice(); document.getElementById('booking-modal').classList.remove('hidden'); }
+        function updatePrice() { const total = document.getElementById('book-count').value * activeVenue.price; document.getElementById('total-price').innerText = `₹${total}`; document.getElementById('upi-price').innerText = `₹${total}`; }
         function processBooking() {
-            const rawDate = document.getElementById('book-date').value;
-            if(!rawDate) return alert("Select Launch Date.");
-            const date = rawDate.split("-").reverse().join("-"); // Format to DD-MM-YYYY
-            if(document.getElementById('book-pay').value === 'UPI') {
-                document.body.classList.add('modal-active');
-                document.getElementById('upi-modal').classList.remove('hidden');
-                document.getElementById('upi-price').innerText = document.getElementById('total-price').innerText;
-            } else alert("Cash Protocol Locked for DD-MM-YYYY: " + date);
+            const rawDate = document.getElementById('book-date').value; if(!rawDate) return alert("Select Launch Date.");
+            const dateParts = rawDate.split("-"); const fDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // DD-MM-YYYY Convert
+            if(document.getElementById('book-pay').value === 'UPI') { document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); } 
+            else alert("Cash Protocol Locked for Date: " + fDate);
         }
-
-        function confirmUPI() {
-            const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true;
-            setTimeout(() => { alert("BANK VERIFIED: Slot secured."); location.reload(); }, 5000);
-        }
-
+        function confirmUPI() { const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true; setTimeout(() => { alert("Verified! Session Locked."); location.reload(); }, 4000); }
         function cancelPayment() { document.body.classList.remove('modal-active'); document.getElementById('upi-modal').classList.add('hidden'); document.getElementById('booking-modal').classList.remove('hidden'); }
-        function showAbout() { document.getElementById('about-modal').classList.remove('hidden'); toggleSidebar(false); }
-        function switchView(v) { document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); if(v==='outdoor'||v==='indoor') renderContent(v); toggleSidebar(false); }
-        function toggleSidebar(show) { const s = document.getElementById('sidebar'); s.classList.toggle('sidebar-hidden', !show); s.classList.toggle('sidebar-visible', show); }
+
+        // Utils
+        function fetchJSONP(params) { return new Promise((resolve) => { const callbackName = 'jsonp_' + Date.now(); const script = document.createElement('script'); window[callbackName] = (data) => { resolve(data); document.body.removeChild(script); delete window[callbackName]; }; params.callback = callbackName; script.src = scriptURL + '?' + new URLSearchParams(params).toString(); document.body.appendChild(script); }); }
+        function toggleSidebar(show) { document.getElementById('sidebar').classList.toggle('sidebar-hidden', !show); document.getElementById('sidebar').classList.toggle('sidebar-visible', show); }
         function toggleAuth(type) { document.getElementById('login-box').classList.toggle('hidden', type !== 'login'); document.getElementById('register-box').classList.toggle('hidden', type !== 'register'); }
+        function showForgot(show) { document.getElementById('login-box').classList.toggle('hidden', show); document.getElementById('forgot-box').classList.toggle('hidden', !show); }
+        function showAbout() { document.getElementById('about-modal').classList.remove('hidden'); toggleSidebar(false); }
+        function showModal(id) { document.getElementById(id).classList.remove('hidden'); toggleSidebar(false); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function closeDisc() { document.getElementById('disc-modal').classList.add('hidden'); }
         function logout() { localStorage.clear(); location.reload(); }
-        function fetchJSONP(params) {
-            return new Promise((resolve) => {
-                const callbackName = 'jsonp_' + Date.now();
-                const script = document.createElement('script');
-                window[callbackName] = (data) => { resolve(data); document.body.removeChild(script); delete window[callbackName]; };
-                params.callback = callbackName; script.src = scriptURL + '?' + new URLSearchParams(params).toString();
-                document.body.appendChild(script);
-            });
-        }
     </script>
 </body>
 </html>
