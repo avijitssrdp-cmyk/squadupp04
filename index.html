@@ -181,7 +181,11 @@
                 </div>
                 <input type="date" id="book-date" class="input-dark text-sm">
                 <select id="book-time" class="input-dark text-sm"></select>
-                <select id="book-pay" class="input-dark text-sm"><option value="Cash">Cash Protocol</option><option value="UPI">Digital UPI</option></select>
+                
+                <select id="book-pay" class="input-dark text-sm" onchange="toggleWarning()"></select>
+                
+                <p id="liquidation-warning" class="text-[8px] text-red-500 font-bold uppercase tracking-widest mt-1 leading-relaxed hidden"></p>
+
                 <button onclick="processBooking()" class="w-full py-4 btn-volt shadow-lg">Initialize Run</button>
                 <button onclick="closeModal('booking-modal')" class="w-full py-2 text-xs font-bold text-gray-500 uppercase hover:text-white">Cancel Slot Booking</button>
             </div>
@@ -191,8 +195,11 @@
     <div id="upi-modal" class="hidden fixed inset-0 bg-black/60 z-[250] flex items-center justify-center p-6 backdrop-blur-2xl">
         <div class="glass p-10 rounded-[2.5rem] max-w-sm w-full text-center border-white/10 shadow-[0_0_50px_rgba(204,255,0,0.15)]">
             <h2 class="text-2xl font-black mb-2 uppercase italic text-[#ccff00]">Scan to Pay</h2>
-            <p class="text-[10px] text-gray-400 mb-6 font-bold uppercase tracking-widest">Total Due: <span id="upi-price" class="text-white">₹0</span></p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SquadUpPayment" class="mx-auto mb-10 rounded-3xl border-4 border-white shadow-2xl">
+            <p class="text-[10px] text-gray-400 mb-6 font-bold uppercase tracking-widest">Total Due Now:</p>
+            <div id="upi-price" class="text-4xl font-black text-white mb-6" data-amount="0" data-type="UPI" data-due="0">₹0</div>
+            
+            <img id="upi-qr-image" src="" class="mx-auto mb-10 rounded-3xl border-4 border-white shadow-2xl">
+            
             <button onclick="confirmUPI()" id="upi-btn" class="w-full py-5 btn-volt text-lg shadow-lg">I Have Paid</button>
             <button onclick="cancelPayment()" class="mt-4 w-full py-2 text-xs font-bold text-red-500 uppercase hover:bg-red-500/10 rounded-xl transition">Cancel Payment</button>
         </div>
@@ -208,8 +215,8 @@
         let tapCount = 0; let tapTimer;
 
         const legends = [
-            { img: 'https://images.unsplash.com/photo-1508344928928-7165b67de128', q: "I have to fight to reach my dream.", a: "Lionel Messi" },
-            { img: 'https://images.unsplash.com/photo-1518605368461-1ee790615566', q: "Your love makes me strong, your hate makes me unstoppable.", a: "Cristiano Ronaldo" },
+            { img: 'https://plus.unsplash.com/premium_photo-1685231505281-c77644c5a195?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', q: "I have to fight to reach my dream.", a: "Lionel Messi" },
+            { img: 'https://plus.unsplash.com/premium_photo-1685231505281-c77644c5a195?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', q: "Your love makes me strong, your hate makes me unstoppable.", a: "Cristiano Ronaldo" },
             { img: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', q: "Don't stop when you are tired. Stop when you are done.", a: "Sachin Tendulkar" },
             { img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da', q: "Self-belief and hard work will always earn you success.", a: "Virat Kohli" },
             { img: 'https://images.unsplash.com/photo-1544919982-b61976f0ba43', q: "I've failed over and over again, that is why I succeed.", a: "Michael Jordan" },
@@ -234,7 +241,7 @@
             legends.forEach((s, i) => {
                 const layer = document.createElement('div');
                 layer.id = `bg-layer-${i}`; layer.className = `bg-layer ${i === 0 ? 'bg-active' : ''}`;
-                layer.style.backgroundImage = `url('${s.img}?q=80&w=1600')`; engine.appendChild(layer);
+                layer.style.backgroundImage = `url('${s.img}')`; engine.appendChild(layer);
             });
             setInterval(cycleBg, 6000);
         }
@@ -263,7 +270,6 @@
             if(res.status === 'success') {
                 currentUser = res.user; window.venues = res.venues || []; window.themeConfig = res.settings;
                 
-                // IT HEAD SAFEGUARD: Force Pending Venues to always exist
                 const pendingVenues = [
                     { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", cap: 10, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800", times: "" },
                     { sport: "Tennis Elite", name: "Grand Slam Court", loc: "Pending Deployment", price: 300, type: "outdoor", cap: 4, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800", times: "" },
@@ -333,20 +339,27 @@
             window.venues.filter(v => v.type === type).forEach(v => {
                 const isP = v.status === "Pending";
                 const visual = v.type === 'outdoor' ? `<img src="${v.img}" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-xl ${isP ? 'grayscale opacity-40' : ''}">` : `<div class="text-7xl text-center py-10 bg-[#1a1a1a] rounded-2xl mb-6 border border-[#333] ${isP ? 'opacity-40' : ''}">${v.img}</div>`;
-                
-                // IT HEAD FIX: Official Google Maps Search API
                 const btn = isP ? `<button class="w-full py-4 bg-white/5 text-gray-500 rounded-xl text-[8px] font-black uppercase tracking-widest cursor-not-allowed border border-white/5">Proceeding: Pending Deployment</button>` : 
-                `<div class="flex space-x-2"><a href="https://www.google.com/maps/search/?api=1&query=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
+                `<div class="flex space-x-2"><a href="http://googleusercontent.com/maps.google.com/search?q=${v.map}" target="_blank" class="p-4 glass rounded-2xl hover:bg-white/10 transition">📍</a><button onclick="openBooking('${v.name}')" class="px-8 py-4 btn-volt text-[10px] flex-grow shadow-lg">Deploy</button></div>`;
                 
+                const rideOptions = isP ? '' : `
+                <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-2">
+                    <a href="https://m.uber.com/ul/?action=setPickup&dropoff[query]=${v.map}" target="_blank" class="py-2 glass rounded-lg text-[8px] font-black text-gray-400 text-center uppercase tracking-widest hover:text-white transition">🚕 Uber</a>
+                    <a href="https://www.rapido.bike/" target="_blank" class="py-2 glass rounded-lg text-[8px] font-black text-gray-400 text-center uppercase tracking-widest hover:text-white transition">🛵 Rapido</a>
+                    <a href="https://indrive.com/" target="_blank" class="py-2 glass rounded-lg text-[8px] font-black text-gray-400 text-center uppercase tracking-widest hover:text-white transition">🚗 InDrive</a>
+                </div>`;
+
                 cont.innerHTML += `<div class="glass p-8 rounded-[2rem] border border-white/5 relative hover:border-[#ccff00]/30 transition-all">
                     ${isP ? '' : `<div class="absolute top-6 right-6 text-[9px] font-black text-[#ccff00] uppercase tracking-widest px-2 py-1 border border-[#ccff00]/30 rounded bg-black/50 backdrop-blur-md">Active</div>`}
                     ${visual}
                     <p class="text-xs text-[#ccff00] font-black uppercase tracking-widest mb-1">${v.sport}</p>
                     <h3 class="text-2xl font-black italic uppercase text-white">${v.name}</h3>
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-8">${v.loc}</p>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-2 mb-8">${v.loc} <span class="text-white ml-1">&bull; ${v.cap} SLOTS MAX</span></p>
                     <div class="flex items-center justify-between mt-8 border-t border-white/5 pt-6">
                         <p class="text-2xl font-black text-[#ccff00]">₹${v.price}</p>${btn}
-                    </div></div>`;
+                    </div>
+                    ${rideOptions}
+                    </div>`;
             });
         }
 
@@ -356,21 +369,55 @@
             const list = document.getElementById('rank-list');
             list.innerHTML = `
                 <div class="glass p-6 rounded-3xl border-l-4 border-yellow-500 shadow-lg">
-                    <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">Rahul Das</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pro | Football</span></div><span class="font-black text-[#ccff00]">42 Sessions</span></div>
-                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★☆</div></div></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex flex-col">
+                            <span class="font-black text-white text-lg flex items-center">Rahul Das <span class="ml-2 px-2 py-0.5 bg-yellow-500 text-black text-[8px] font-black uppercase rounded shadow-[0_0_10px_rgba(234,179,8,0.5)]">Founding Athlete</span></span>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Pro | Football</span>
+                        </div>
+                        <span class="font-black text-[#ccff00]">42 Sessions</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div>
+                        <div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★☆</div></div>
+                    </div>
                 </div>
                 <div class="glass p-6 rounded-3xl border-l-4 border-[#ccff00]/50 mt-4 opacity-80">
-                    <div class="flex justify-between items-center mb-4"><div class="flex flex-col"><span class="font-black text-white text-lg">${uName}</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${uSkill} | Active Athlete</span></div><span class="font-black text-white">35 Sessions</span></div>
-                    <div class="grid grid-cols-2 gap-4"><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div><div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★★</div></div></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex flex-col">
+                            <span class="font-black text-white text-lg flex items-center">${uName} <span class="ml-2 px-2 py-0.5 btn-volt text-[8px] font-black uppercase rounded shadow-[0_0_10px_var(--volt)]">Founding Athlete</span></span>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${uSkill} | Active Athlete</span>
+                        </div>
+                        <span class="font-black text-white">35 Sessions</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Conduct</p><div class="text-[#ccff00] text-xs">★★★★★</div></div>
+                        <div class="bg-black/40 p-3 rounded-xl border border-white/5"><p class="text-[8px] text-gray-500 font-bold mb-1 uppercase">Tactical Skill</p><div class="text-[#ccff00] text-xs">★★★★★</div></div>
+                    </div>
                 </div>`;
+        }
+
+        function toggleWarning() {
+            const payType = document.getElementById('book-pay').value;
+            const warning = document.getElementById('liquidation-warning');
+            
+            if(payType === 'Token') {
+                warning.innerText = "⚠️ 2-Hour Check-in Rule Active. Failure to verify 2 hours prior will liquidate your slot to the Mercenary Board.";
+                warning.className = "text-[8px] font-bold uppercase tracking-widest mt-1 leading-relaxed text-red-500";
+            } else if (payType === 'Waitlist') {
+                warning.innerText = "🕒 STANDBY MODE: You pay nothing now. If a booked squad ghosts, you get first priority to lock the slot.";
+                warning.className = "text-[8px] font-bold uppercase tracking-widest mt-1 leading-relaxed text-[#ccff00]";
+            } else {
+                warning.classList.add('hidden');
+            }
         }
 
         function openBooking(name) { 
             activeVenue = window.venues.find(v => v.name === name); 
             document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; 
-            document.getElementById('book-count').max = activeVenue.cap; updatePrice(); 
+            document.getElementById('book-count').max = activeVenue.cap;
             
-            // IT HEAD FIX: Dynamic Emoji Injector
+            document.getElementById('book-count').value = 1;
+            
             const timeSelect = document.getElementById('book-time'); timeSelect.innerHTML = '';
             if(activeVenue.times) {
                 activeVenue.times.split(',').forEach(t => { 
@@ -382,17 +429,90 @@
                 });
             } else { timeSelect.innerHTML = `<option value="Morning">🌅 06:00-08:00 AM</option>`; }
 
+            updatePrice();
             document.getElementById('booking-modal').classList.remove('hidden'); 
         }
         
-        function updatePrice() { const total = document.getElementById('book-count').value * activeVenue.price; document.getElementById('total-price').innerText = `₹${total}`; document.getElementById('upi-price').innerText = `₹${total}`; }
-        function processBooking() {
-            const rawDate = document.getElementById('book-date').value; if(!rawDate) return alert("Select Launch Date.");
-            const fDate = rawDate.split("-").reverse().join("-"); 
-            if(document.getElementById('book-pay').value === 'UPI') { document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); } 
-            else { alert("Cash Protocol Locked for Date: " + fDate); document.getElementById('booking-modal').classList.add('hidden'); }
+        function updatePrice() { 
+            const count = parseInt(document.getElementById('book-count').value);
+            const total = count * activeVenue.price; 
+            document.getElementById('total-price').innerText = `₹${total}`; 
+            
+            let tokenText = "Token Protocol (20% Advance)";
+            if (count >= 3 && count <= 5) tokenText = "Token Protocol (50% Advance)";
+            
+            const paySelect = document.getElementById('book-pay');
+            
+            if (count >= 6) {
+                paySelect.innerHTML = `<option value="UPI">Full Digital UPI (100% Required for Bulk)</option><option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
+            } else {
+                paySelect.innerHTML = `<option value="Token">${tokenText}</option><option value="UPI">Full Digital UPI (100%)</option><option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
+            }
+            toggleWarning();
         }
-        function confirmUPI() { const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true; setTimeout(() => { alert("Verified! Session Locked."); location.reload(); }, 4000); }
+        
+        async function processBooking() {
+            const rawDate = document.getElementById('book-date').value; if(!rawDate) return alert("Select Launch Date.");
+            const total = parseInt(document.getElementById('total-price').innerText.replace('₹', ''));
+            const payType = document.getElementById('book-pay').value;
+            const count = parseInt(document.getElementById('book-count').value);
+
+            if (payType === 'Waitlist') {
+                const btn = document.querySelector('#booking-modal .btn-volt'); btn.innerText = "JOINING WAITLIST...";
+                const fDate = rawDate.split("-").reverse().join("-"); 
+                const data = { action: 'book', name: currentUser.name, phone: currentUser.phone || "", email: currentUser.email || "", skill: currentUser.skill || "", game: activeVenue.sport, playDate: fDate, timeSlot: document.getElementById('book-time').value, venue: activeVenue.name, payMethod: 'Standby Waitlist', totalAmount: 0 };
+                
+                await fetchJSONP(data);
+                alert("WAITLIST JOINED: You will be automatically pinged if a booked squad ghosts.");
+                document.getElementById('booking-modal').classList.add('hidden');
+                location.reload(); 
+                return;
+            }
+
+            document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); 
+
+            let tokenPct = 0.20;
+            if(count >= 3 && count <= 5) tokenPct = 0.50;
+            if(count >= 6) tokenPct = 1.00; 
+
+            // 🚀 IT HEAD INJECTION: Dynamic UPI Intent QR Code Generator
+            let finalAmount = total;
+            if(payType === 'Token' && tokenPct < 1.00) {
+                const tokenAmount = Math.ceil(total * tokenPct);
+                document.getElementById('upi-price').innerHTML = `₹${tokenAmount} <span class="text-[10px] text-gray-400 font-bold block mt-2 tracking-widest">(Balance ₹${total - tokenAmount} Due at Venue)</span>`;
+                document.getElementById('upi-price').dataset.amount = tokenAmount;
+                document.getElementById('upi-price').dataset.type = 'Token';
+                document.getElementById('upi-price').dataset.due = total - tokenAmount;
+                finalAmount = tokenAmount;
+            } else {
+                document.getElementById('upi-price').innerHTML = `₹${total}`;
+                document.getElementById('upi-price').dataset.amount = total;
+                document.getElementById('upi-price').dataset.type = 'UPI';
+                document.getElementById('upi-price').dataset.due = 0;
+            }
+
+            // Encodes your exact UPI ID and the calculated amount into the QR
+            const upiLink = `upi://pay?pa=8777096107@upi&pn=SquadUp&am=${finalAmount}&cu=INR`;
+            document.getElementById('upi-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+        }
+        
+        async function confirmUPI() { 
+            const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true; 
+            const rawDate = document.getElementById('book-date').value; const fDate = rawDate.split("-").reverse().join("-"); 
+            const total = parseInt(document.getElementById('total-price').innerText.replace('₹', ''));
+            
+            const payType = document.getElementById('upi-price').dataset.type;
+            const due = document.getElementById('upi-price').dataset.due;
+            const finalMethod = payType === 'Token' ? `Token Advance Paid | Due at Venue: ₹${due}` : 'Full UPI Paid';
+
+            const data = { action: 'book', name: currentUser.name, phone: currentUser.phone || "", email: currentUser.email || "", skill: currentUser.skill || "", game: activeVenue.sport, playDate: fDate, timeSlot: document.getElementById('book-time').value, venue: activeVenue.name, payMethod: finalMethod, totalAmount: total };
+            
+            await fetchJSONP(data);
+            if(payType === 'Token') { alert("PAYMENT SUBMITTED: Token Locked & Invoice Sent.\n\n⚠️ 2-HOUR RULE ACTIVE: You must check-in digitally 2 hours before kickoff, or your slot will be liquidated."); } 
+            else { alert("PAYMENT SUBMITTED: Session Locked & Invoice Dispatched to Email."); }
+            location.reload(); 
+        }
+        
         function cancelPayment() { document.body.classList.remove('modal-active'); document.getElementById('upi-modal').classList.add('hidden'); document.getElementById('booking-modal').classList.remove('hidden'); }
 
         function fetchJSONP(params) { return new Promise((resolve) => { const callbackName = 'jsonp_' + Date.now() + Math.floor(Math.random()*1000); const script = document.createElement('script'); window[callbackName] = (data) => { resolve(data); document.body.removeChild(script); delete window[callbackName]; }; params.callback = callbackName; script.src = scriptURL + '?' + new URLSearchParams(params).toString(); document.body.appendChild(script); }); }
