@@ -81,7 +81,6 @@
             <button id="nav-admin" onclick="switchView('admin')" class="hidden w-full text-left p-4 rounded-xl bg-[#ccff00]/10 text-[#ccff00] transition font-bold italic border border-[#ccff00]/20">🛡️ Admin Protocol</button>
             <button onclick="showModal('about-modal')" class="w-full text-left p-4 rounded-xl hover:bg-[#1a1a1a] transition font-bold">ℹ️ About Us</button>
         </div>
-        <div class="p-6 border-t border-[#222]"><button onclick="logout()" class="w-full py-3 border border-red-500/50 text-red-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500/10">Terminate Session</button></div>
     </nav>
 
     <div id="main-content" class="hidden flex flex-col min-h-screen">
@@ -107,7 +106,23 @@
                     <p class="text-[#ccff00] font-black text-xs uppercase tracking-widest">Protocol: <span id="user-name">Player</span></p>
                     <h2 id="quote" class="text-4xl md:text-6xl font-black italic leading-tight text-white drop-shadow-2xl h-40 flex items-end">"I have to fight to reach my dream."</h2>
                     <p id="author" class="text-sm text-gray-400 font-bold uppercase tracking-widest">— Lionel Messi</p>
-                    <div class="flex space-x-4 mt-8"><button onclick="switchView('outdoor')" class="px-8 py-4 btn-volt text-xs shadow-lg">Outdoor Turfs</button><button onclick="switchView('indoor')" class="px-8 py-4 border border-white/20 rounded-xl text-xs font-black uppercase hover:bg-white/5 transition">Indoor Arenas</button></div>
+                    
+                    <div class="mt-6 p-5 rounded-2xl bg-red-500/10 border border-red-500/30 relative overflow-hidden backdrop-blur-md cursor-pointer hover:bg-red-500/20 transition-all shadow-[0_0_20px_rgba(220,38,38,0.15)] group" onclick="alert('PITCH DEMO MODE:\\n\\nClicking this instantly locks the ₹800 discounted rate and opens the UPI scanner.\\n\\nShow this to turf owners to prove how SquadUp automatically liquidates their dead, unbooked hours at the last minute!')">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500 group-hover:bg-[#ccff00] transition-colors"></div>
+                        <div class="flex justify-between items-center pl-2">
+                            <div>
+                                <p class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-1 flex items-center group-hover:text-[#ccff00] transition-colors">⚡ Flash Deployment <span class="ml-2 px-1.5 py-0.5 bg-red-500 text-black text-[7px] rounded animate-pulse group-hover:bg-[#ccff00]">LIVE</span></p>
+                                <h3 class="text-xl font-black italic text-white tracking-tight">Urban Sports Arena</h3>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Tonight • 08:00 PM Shift</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500 line-through font-bold mb-0.5">₹1,200</p>
+                                <p class="text-2xl font-black text-[#ccff00]">₹800</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4 mt-6"><button onclick="switchView('outdoor')" class="px-8 py-4 btn-volt text-xs shadow-lg">Outdoor Turfs</button><button onclick="switchView('indoor')" class="px-8 py-4 border border-white/20 rounded-xl text-xs font-black uppercase hover:bg-white/5 transition">Indoor Arenas</button></div>
                 </div>
             </div>
 
@@ -212,7 +227,7 @@
         // ---------------------------------------------------------
         // IT HEAD SAFEGUARD: PASTE YOUR /exec URL BELOW
         // ---------------------------------------------------------
-        const scriptURL = 'YOUR_NEW_DEPLOYMENT_URL_HERE'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; 
         
         let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
         let tapCount = 0; let tapTimer;
@@ -258,7 +273,6 @@
             document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
         }
         
-        // 🚀 IT HEAD FIX: Rip out the 2-day delay. Min date is today. Immediate Deployments allowed.
         function initDatePicker() {
             const dateInput = document.getElementById('book-date'); const today = new Date(); 
             dateInput.min = today.toISOString().split('T')[0]; dateInput.value = today.toISOString().split('T')[0];
