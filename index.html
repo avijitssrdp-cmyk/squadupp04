@@ -212,7 +212,7 @@
         // ---------------------------------------------------------
         // IT HEAD SAFEGUARD: PASTE YOUR /exec URL BELOW
         // ---------------------------------------------------------
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; 
+        const scriptURL = 'YOUR_NEW_DEPLOYMENT_URL_HERE'; 
         
         let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
         let tapCount = 0; let tapTimer;
@@ -254,13 +254,13 @@
             activeBgIdx = (activeBgIdx + 1) % legends.length;
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.add('bg-active');
             
-            // 🚀 IT HEAD FIX: Removed the theme override blocker so all sports quotes dynamically cycle
             document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
             document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
         }
         
+        // 🚀 IT HEAD FIX: Rip out the 2-day delay. Min date is today. Immediate Deployments allowed.
         function initDatePicker() {
-            const dateInput = document.getElementById('book-date'); const today = new Date(); today.setDate(today.getDate() + 2);
+            const dateInput = document.getElementById('book-date'); const today = new Date(); 
             dateInput.min = today.toISOString().split('T')[0]; dateInput.value = today.toISOString().split('T')[0];
         }
 
@@ -274,7 +274,7 @@
             
             if(res.status === 'success') {
                 currentUser = res.user; window.venues = res.venues || []; window.themeConfig = res.settings; 
-                window.activeBookings = res.bookings || []; // 🚀 Storing live ledger data
+                window.activeBookings = res.bookings || []; 
                 
                 const pendingVenues = [
                     { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", cap: 10, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800", times: "" },
@@ -416,7 +416,6 @@
             }
         }
 
-        // 🚀 IT HEAD INJECTION: Real-time Live Ledger Math
         function checkAvailability() {
             if(!activeVenue) return;
             const rawDate = document.getElementById('book-date').value;
