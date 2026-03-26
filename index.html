@@ -179,8 +179,11 @@
                     <input type="number" id="book-count" min="1" max="10" value="1" class="input-dark py-2 text-center text-xl font-black" onchange="updatePrice()">
                     <p class="text-right text-xs mt-2 text-gray-400">Total: <span id="total-price" class="text-white font-black">₹0</span></p>
                 </div>
-                <input type="date" id="book-date" class="input-dark text-sm">
-                <select id="book-time" class="input-dark text-sm"></select>
+                
+                <input type="date" id="book-date" class="input-dark text-sm" onchange="checkAvailability()">
+                <select id="book-time" class="input-dark text-sm" onchange="checkAvailability()"></select>
+                
+                <p id="slot-status" class="text-[10px] text-[#ccff00] font-black uppercase tracking-widest text-center mt-2"></p>
                 
                 <select id="book-pay" class="input-dark text-sm" onchange="toggleWarning()"></select>
                 
@@ -209,7 +212,7 @@
         // ---------------------------------------------------------
         // IT HEAD SAFEGUARD: PASTE YOUR /exec URL BELOW
         // ---------------------------------------------------------
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbz44BFDkcsQEpJpzKnh5oaXLdI1ljfD5BtwHBwYn-F2BnEzI59nul2WyFehNgzfoQdh/exec'; 
+        const scriptURL = 'YOUR_NEW_DEPLOYMENT_URL_HERE'; 
         
         let currentUser = null; let activeBgIdx = 0; let activeVenue = null; window.venues = [];
         let tapCount = 0; let tapTimer;
@@ -245,15 +248,17 @@
             });
             setInterval(cycleBg, 6000);
         }
+        
         function cycleBg() {
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.remove('bg-active');
             activeBgIdx = (activeBgIdx + 1) % legends.length;
             document.getElementById(`bg-layer-${activeBgIdx}`).classList.add('bg-active');
-            if(!window.themeConfig || !window.themeConfig.HeroQuote) {
-                document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
-                document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
-            }
+            
+            // 🚀 IT HEAD FIX: Removed the theme override blocker so all sports quotes dynamically cycle
+            document.getElementById('quote').innerText = `"${legends[activeBgIdx].q}"`;
+            document.getElementById('author').innerText = `— ${legends[activeBgIdx].a}`;
         }
+        
         function initDatePicker() {
             const dateInput = document.getElementById('book-date'); const today = new Date(); today.setDate(today.getDate() + 2);
             dateInput.min = today.toISOString().split('T')[0]; dateInput.value = today.toISOString().split('T')[0];
@@ -268,7 +273,8 @@
             const res = await fetchJSONP({ action: 'login', loginId: document.getElementById(idField).value, password: document.getElementById(passField).value });
             
             if(res.status === 'success') {
-                currentUser = res.user; window.venues = res.venues || []; window.themeConfig = res.settings;
+                currentUser = res.user; window.venues = res.venues || []; window.themeConfig = res.settings; 
+                window.activeBookings = res.bookings || []; // 🚀 Storing live ledger data
                 
                 const pendingVenues = [
                     { sport: "Basketball", name: "Hoops Pro Arena", loc: "Pending Deployment", price: 250, type: "outdoor", cap: 10, status: "Pending", map: "", img: "https://images.unsplash.com/photo-1544919982-b61976f0ba43?w=800", times: "" },
@@ -278,7 +284,6 @@
                 pendingVenues.forEach(p => { if(!window.venues.find(v => v.name === p.name)) window.venues.push(p); });
 
                 if(res.settings && res.settings.BrandColor) { document.documentElement.style.setProperty('--volt', res.settings.BrandColor); }
-                if(res.settings && res.settings.HeroQuote) { document.getElementById('quote').innerText = `"${res.settings.HeroQuote}"`; document.getElementById('author').innerText = `— ${res.settings.HeroAuthor}`; }
                 
                 document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-name').innerText = currentUser.name.split(' ')[0]; document.getElementById('dropdown-name').innerText = currentUser.name; document.getElementById('avatar').innerText = currentUser.name[0].toUpperCase();
@@ -411,11 +416,51 @@
             }
         }
 
+        // 🚀 IT HEAD INJECTION: Real-time Live Ledger Math
+        function checkAvailability() {
+            if(!activeVenue) return;
+            const rawDate = document.getElementById('book-date').value;
+            if(!rawDate) return;
+            
+            const fDate = rawDate.split("-").reverse().join("-");
+            const selTime = document.getElementById('book-time').value;
+            const targetDetail = `${activeVenue.sport} | ${fDate} | ${selTime}`;
+
+            let bookedSlots = 0;
+            
+            window.activeBookings.forEach(b => {
+                if(b.venue === activeVenue.name && b.details === targetDetail) {
+                    if(b.method !== 'Standby Waitlist') {
+                        let slots = Math.round(parseInt(b.amount) / activeVenue.price);
+                        bookedSlots += (isNaN(slots) ? 0 : slots);
+                    }
+                }
+            });
+
+            let remaining = activeVenue.cap - bookedSlots;
+            if(remaining < 0) remaining = 0;
+
+            document.getElementById('slot-status').innerText = `${bookedSlots} SLOTS BOOKED | ${remaining} REMAINING`;
+            
+            const countInput = document.getElementById('book-count');
+            countInput.max = remaining;
+            
+            if(parseInt(countInput.value) > remaining) { countInput.value = remaining; }
+            
+            const paySelect = document.getElementById('book-pay');
+            if(remaining === 0) {
+                countInput.value = 0;
+                paySelect.innerHTML = `<option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
+            } else {
+                if (countInput.value == 0) countInput.value = 1;
+            }
+            updatePrice();
+        }
+
         function openBooking(name) { 
             activeVenue = window.venues.find(v => v.name === name); 
             document.getElementById('book-venue-name').innerText = `${activeVenue.sport} | ${name}`; 
             document.getElementById('book-count').max = activeVenue.cap;
-            
             document.getElementById('book-count').value = 1;
             
             const timeSelect = document.getElementById('book-time'); timeSelect.innerHTML = '';
@@ -429,12 +474,12 @@
                 });
             } else { timeSelect.innerHTML = `<option value="Morning">🌅 06:00-08:00 AM</option>`; }
 
-            updatePrice();
             document.getElementById('booking-modal').classList.remove('hidden'); 
+            checkAvailability(); 
         }
         
         function updatePrice() { 
-            const count = parseInt(document.getElementById('book-count').value);
+            const count = parseInt(document.getElementById('book-count').value) || 0;
             const total = count * activeVenue.price; 
             document.getElementById('total-price').innerText = `₹${total}`; 
             
@@ -442,8 +487,11 @@
             if (count >= 3 && count <= 5) tokenText = "Token Protocol (50% Advance)";
             
             const paySelect = document.getElementById('book-pay');
-            
-            if (count >= 6) {
+            const remainingSlots = parseInt(document.getElementById('book-count').max);
+
+            if (remainingSlots === 0) {
+                paySelect.innerHTML = `<option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
+            } else if (count >= 6) {
                 paySelect.innerHTML = `<option value="UPI">Full Digital UPI (100% Required for Bulk)</option><option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
             } else {
                 paySelect.innerHTML = `<option value="Token">${tokenText}</option><option value="UPI">Full Digital UPI (100%)</option><option value="Waitlist">Join Standby Waitlist (₹0)</option>`;
@@ -453,9 +501,9 @@
         
         async function processBooking() {
             const rawDate = document.getElementById('book-date').value; if(!rawDate) return alert("Select Launch Date.");
-            const total = parseInt(document.getElementById('total-price').innerText.replace('₹', ''));
+            const total = parseInt(document.getElementById('total-price').innerText.replace('₹', '')) || 0;
             const payType = document.getElementById('book-pay').value;
-            const count = parseInt(document.getElementById('book-count').value);
+            const count = parseInt(document.getElementById('book-count').value) || 0;
 
             if (payType === 'Waitlist') {
                 const btn = document.querySelector('#booking-modal .btn-volt'); btn.innerText = "JOINING WAITLIST...";
@@ -469,13 +517,14 @@
                 return;
             }
 
+            if (count === 0) return alert("Please select at least 1 slot.");
+
             document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); 
 
             let tokenPct = 0.20;
             if(count >= 3 && count <= 5) tokenPct = 0.50;
             if(count >= 6) tokenPct = 1.00; 
 
-            // 🚀 IT HEAD INJECTION: Dynamic UPI Intent QR Code Generator
             let finalAmount = total;
             if(payType === 'Token' && tokenPct < 1.00) {
                 const tokenAmount = Math.ceil(total * tokenPct);
@@ -491,7 +540,6 @@
                 document.getElementById('upi-price').dataset.due = 0;
             }
 
-            // Encodes your exact UPI ID and the calculated amount into the QR
             const upiLink = `upi://pay?pa=8777096107@upi&pn=SquadUp&am=${finalAmount}&cu=INR`;
             document.getElementById('upi-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
         }
