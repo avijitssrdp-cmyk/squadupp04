@@ -24,6 +24,8 @@
         @keyframes pulse-login { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
         .logging-in { animation: pulse-login 1s infinite; pointer-events: none; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
@@ -171,6 +173,7 @@
                 <p><b>2. Digital Aggregator Scope:</b> SquadUp acts strictly as a booking interface. We do not own or manage the physical venues. Quality of facilities, lighting, or staff conduct at the venue is the sole responsibility of the respective venue management.</p>
                 <p><b>3. Mandatory Reputation Protocol:</b> To maintain an elite environment, every session requires a mandatory peer review. Failure to adhere to professional conduct may result in a permanent reputation ban.</p>
                 <p><b>4. Booking & Payment Verification:</b> UPI transactions are verified against live bank ledgers. Any fraudulent confirmation attempt will result in immediate legal reporting and account termination.</p>
+                <p><b>5. Mandatory ID Verification:</b> Athletes are strictly advised to carry a valid physical or digital Identity Proof to the venue. Arena management reserves the full right to verify identity and deny entry without refund if ID is not presented.</p>
             </div>
             <button onclick="closeModal('disc-modal')" class="w-full py-5 btn-volt text-xl shadow-lg">Acknowledge & Deploy</button>
         </div>
@@ -211,15 +214,19 @@
     </div>
 
     <div id="upi-modal" class="hidden fixed inset-0 bg-black/60 z-[250] flex items-center justify-center p-6 backdrop-blur-2xl">
-        <div class="glass p-10 rounded-[2.5rem] max-w-sm w-full text-center border-white/10 shadow-[0_0_50px_rgba(204,255,0,0.15)]">
+        <div class="glass p-10 rounded-[2.5rem] max-w-sm w-full text-center border-white/10 shadow-[0_0_50px_rgba(204,255,0,0.15)] flex flex-col items-center">
             <h2 class="text-2xl font-black mb-2 uppercase italic text-[#ccff00]">Scan to Pay</h2>
             <p class="text-[10px] text-gray-400 mb-6 font-bold uppercase tracking-widest">Total Due Now:</p>
             <div id="upi-price" class="text-4xl font-black text-white mb-6" data-amount="0" data-type="UPI" data-due="0">₹0</div>
             
-            <img id="upi-qr-image" src="" class="mx-auto mb-10 rounded-3xl border-4 border-white shadow-2xl">
+            <img id="upi-qr-image" src="" class="mx-auto mb-8 rounded-3xl border-4 border-white shadow-2xl">
             
-            <button onclick="confirmUPI()" id="upi-btn" class="w-full py-5 btn-volt text-lg shadow-lg">I Have Paid</button>
+            <input type="number" id="upi-ref" placeholder="Enter 12-Digit UPI UTR No." class="input-dark text-center tracking-widest text-sm font-black mb-4 border border-white/20" oninput="if(this.value.length > 12) this.value = this.value.slice(0,12);">
+            
+            <button onclick="confirmUPI()" id="upi-btn" class="w-full py-5 btn-volt text-lg shadow-lg">Submit UTR Verification</button>
             <button onclick="cancelPayment()" class="mt-4 w-full py-2 text-xs font-bold text-red-500 uppercase hover:bg-red-500/10 rounded-xl transition">Cancel Payment</button>
+
+            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mt-6">⚠️ STRICT ADVISORY: CARRY VALID ID PROOF TO THE VENUE FOR MANAGEMENT VERIFICATION.</p>
         </div>
     </div>
 
@@ -326,7 +333,7 @@
         async function updateVenue() {
             const btn = document.getElementById('admin-btn'); btn.innerText = "UPDATING SERVER...";
             const res = await fetchJSONP({ action: 'updateVenue', name: document.getElementById('admin-venue-select').value, cap: document.getElementById('admin-cap').value, times: document.getElementById('admin-times').value });
-            alert(res.msg); btn.innerText = "Push Update to Server"; if(res.status==='success') location.reload(); 
+            alert(res.msg); btn.innerText = "Push Update to Server"; if(res.status==='success') { loadAdminVenueData(); alert("Update synced locally. Reload to see changes publicly."); }
         }
 
         async function deployNewVenue() {
@@ -339,7 +346,7 @@
             if(!data.vName || !data.vSport) { alert("Arena Name and Sport are strictly required."); btn.innerText = "Push Live to Network"; return; }
             const res = await fetchJSONP(data);
             alert(res.msg); btn.innerText = "Push Live to Network";
-            if(res.status === 'success') location.reload(); 
+            if(res.status === 'success') { alert("Venue deployed locally. Reload page to fetch from server."); } 
         }
 
         async function handleRegister() {
@@ -347,7 +354,7 @@
             const phoneVal = document.getElementById('reg-phone').value;
             if(phoneVal.length !== 10 || isNaN(phoneVal)) { alert("Protocol Error: Phone number must be exactly 10 digits."); btn.innerText = "Generate ID"; return; }
             const data = { action: 'register', name: document.getElementById('reg-name').value, phone: phoneVal, email: document.getElementById('reg-email').value, password: document.getElementById('reg-pass').value, sport: document.getElementById('reg-sport').value, skill: document.getElementById('reg-skill').value, dob: document.getElementById('reg-dob').value, bloodGroup: document.getElementById('reg-blood').value };
-            fetchJSONP(data).then(res => { if(res.status === 'success') { alert("Profile Created! Proceed to Login."); location.reload(); } else { alert(res.msg); btn.innerText = "Generate ID"; } });
+            fetchJSONP(data).then(res => { if(res.status === 'success') { alert("Profile Created! Proceed to Login."); toggleAuth('login'); } else { alert(res.msg); btn.innerText = "Generate ID"; } });
         }
         async function handleForgot() { const res = await fetchJSONP({ action: 'forgot', email: document.getElementById('forgot-email').value, newPassword: document.getElementById('forgot-new-pass').value }); alert(res.msg); if(res.status === 'success') showForgot(false); }
 
@@ -526,13 +533,16 @@
                 await fetchJSONP(data);
                 alert("WAITLIST JOINED: You will be automatically pinged if a booked squad ghosts.");
                 document.getElementById('booking-modal').classList.add('hidden');
-                location.reload(); 
+                
+                // 🚀 IT HEAD FIX: Seamless UI reset without refreshing browser
+                switchView('home'); 
                 return;
             }
 
             if (count === 0) return alert("Please select at least 1 slot.");
 
             document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); 
+            document.getElementById('upi-ref').value = ''; // Reset UTR input for safety
 
             let tokenPct = 0.20;
             if(count >= 3 && count <= 5) tokenPct = 0.50;
@@ -558,20 +568,35 @@
         }
         
         async function confirmUPI() { 
+            // 🚀 IT HEAD INJECTION: Check 12-Digit UTR
+            const utrInput = document.getElementById('upi-ref').value;
+            if (utrInput.length !== 12) {
+                alert("SECURITY HALT: You must enter the exact 12-digit UPI Reference Number (UTR) from your payment app to verify this transaction.");
+                return;
+            }
+
             const btn = document.getElementById('upi-btn'); btn.innerText = "VERIFYING LEDGER..."; btn.disabled = true; 
             const rawDate = document.getElementById('book-date').value; const fDate = rawDate.split("-").reverse().join("-"); 
             const total = parseInt(document.getElementById('total-price').innerText.replace('₹', ''));
             
             const payType = document.getElementById('upi-price').dataset.type;
             const due = document.getElementById('upi-price').dataset.due;
-            const finalMethod = payType === 'Token' ? `Token Advance Paid | Due at Venue: ₹${due}` : 'Full UPI Paid';
+            
+            // 🚀 IT HEAD INJECTION: Embed UTR in the Ledger
+            const finalMethod = payType === 'Token' ? `Token Advance Paid (UTR: ${utrInput}) | Due at Venue: ₹${due}` : `Full UPI Paid (UTR: ${utrInput})`;
 
             const data = { action: 'book', name: currentUser.name, phone: currentUser.phone || "", email: currentUser.email || "", skill: currentUser.skill || "", game: activeVenue.sport, playDate: fDate, timeSlot: document.getElementById('book-time').value, venue: activeVenue.name, payMethod: finalMethod, totalAmount: total };
             
             await fetchJSONP(data);
+            
             if(payType === 'Token') { alert("PAYMENT SUBMITTED: Token Locked & Invoice Sent.\n\n⚠️ 2-HOUR RULE ACTIVE: You must check-in digitally 2 hours before kickoff, or your slot will be liquidated."); } 
             else { alert("PAYMENT SUBMITTED: Session Locked & Invoice Dispatched to Email."); }
-            location.reload(); 
+            
+            // 🚀 IT HEAD FIX: Seamless UI reset without refreshing browser
+            btn.innerText = "Submit UTR Verification"; btn.disabled = false;
+            document.body.classList.remove('modal-active'); 
+            document.getElementById('upi-modal').classList.add('hidden');
+            switchView('home'); 
         }
         
         function cancelPayment() { document.body.classList.remove('modal-active'); document.getElementById('upi-modal').classList.add('hidden'); document.getElementById('booking-modal').classList.remove('hidden'); }
