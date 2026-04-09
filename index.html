@@ -24,7 +24,6 @@
         @keyframes pulse-login { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
         .logging-in { animation: pulse-login 1s infinite; pointer-events: none; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-        /* Hide number input arrows */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
@@ -534,7 +533,6 @@
                 alert("WAITLIST JOINED: You will be automatically pinged if a booked squad ghosts.");
                 document.getElementById('booking-modal').classList.add('hidden');
                 
-                // 🚀 IT HEAD FIX: Seamless UI reset without refreshing browser
                 switchView('home'); 
                 return;
             }
@@ -542,7 +540,7 @@
             if (count === 0) return alert("Please select at least 1 slot.");
 
             document.body.classList.add('modal-active'); document.getElementById('booking-modal').classList.add('hidden'); document.getElementById('upi-modal').classList.remove('hidden'); 
-            document.getElementById('upi-ref').value = ''; // Reset UTR input for safety
+            document.getElementById('upi-ref').value = ''; 
 
             let tokenPct = 0.20;
             if(count >= 3 && count <= 5) tokenPct = 0.50;
@@ -568,7 +566,6 @@
         }
         
         async function confirmUPI() { 
-            // 🚀 IT HEAD INJECTION: Check 12-Digit UTR
             const utrInput = document.getElementById('upi-ref').value;
             if (utrInput.length !== 12) {
                 alert("SECURITY HALT: You must enter the exact 12-digit UPI Reference Number (UTR) from your payment app to verify this transaction.");
@@ -582,7 +579,6 @@
             const payType = document.getElementById('upi-price').dataset.type;
             const due = document.getElementById('upi-price').dataset.due;
             
-            // 🚀 IT HEAD INJECTION: Embed UTR in the Ledger
             const finalMethod = payType === 'Token' ? `Token Advance Paid (UTR: ${utrInput}) | Due at Venue: ₹${due}` : `Full UPI Paid (UTR: ${utrInput})`;
 
             const data = { action: 'book', name: currentUser.name, phone: currentUser.phone || "", email: currentUser.email || "", skill: currentUser.skill || "", game: activeVenue.sport, playDate: fDate, timeSlot: document.getElementById('book-time').value, venue: activeVenue.name, payMethod: finalMethod, totalAmount: total };
@@ -592,7 +588,6 @@
             if(payType === 'Token') { alert("PAYMENT SUBMITTED: Token Locked & Invoice Sent.\n\n⚠️ 2-HOUR RULE ACTIVE: You must check-in digitally 2 hours before kickoff, or your slot will be liquidated."); } 
             else { alert("PAYMENT SUBMITTED: Session Locked & Invoice Dispatched to Email."); }
             
-            // 🚀 IT HEAD FIX: Seamless UI reset without refreshing browser
             btn.innerText = "Submit UTR Verification"; btn.disabled = false;
             document.body.classList.remove('modal-active'); 
             document.getElementById('upi-modal').classList.add('hidden');
